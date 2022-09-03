@@ -4,6 +4,6 @@ router = APIRouter()
 
 
 @router.get("/")
-def read_items():
+def get_items():
     """ """
     return {"id": 1}
