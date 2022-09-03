@@ -10,7 +10,7 @@ app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KY)
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
 
 # Routes
