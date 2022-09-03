@@ -6,3 +6,4 @@ itsdangerous==2.1.2
 httpx==0.23.0
 SQLAlchemy==1.4.40
 psycopg2==2.9.3
+python-jose==3.3.0
