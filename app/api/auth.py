@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Request
-from starlette.requests import Request
 
 from app.core.oauth import oauth
 
