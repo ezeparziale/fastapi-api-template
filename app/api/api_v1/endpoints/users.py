@@ -12,7 +12,11 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     """ 
     ### Create user
     """
-    return {"id": 1}
+    new_user = User(**user.dict())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 
 
 @router.get("/{id}", response_model=UserOut)
