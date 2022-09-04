@@ -22,9 +22,15 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
+@router.get("/me", response_model=UserOut)
+def get_user_me(current_user: User = Depends(get_current_user)):
+    """
+    ### Get current user info
+    """
+    return current_user
 
 @router.get("/{id}", response_model=UserOut)
-def get_user(id: int, db: Session = Depends(get_db), current_user: int = Depends(get_current_user)):
+def get_user(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     ### Get user
     """
