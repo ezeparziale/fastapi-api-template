@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Request, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+
+from app.core.oauth import create_access_token, oauth
 from app.db.database import get_db
 from app.models import User
-from app.core.oauth import oauth, create_access_token
 from app.schemas import Token
-from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from app.utils import verify_password
 
 auth_router = APIRouter()
@@ -26,7 +27,7 @@ async def authorize(request: Request, db: Session = Depends(get_db)):
     """
     token = await oauth.google.authorize_access_token(request)
     user = db.query(User).filter(User.email == token["userinfo"]["email"]).first()
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials"
@@ -41,11 +42,7 @@ async def login(
     user_credentials: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
-    user = (
-        db.query(User)
-        .filter(User.email == user_credentials.username)
-        .first()
-    )
+    user = db.query(User).filter(User.email == user_credentials.username).first()
 
     if not user:
         raise HTTPException(

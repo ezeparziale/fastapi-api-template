@@ -1,5 +1,7 @@
+from typing import Any, Dict, Optional
+
 from pydantic import BaseSettings, PostgresDsn, validator
-from typing import Optional, Dict, Any
+
 
 class Settings(BaseSettings):
     # FastAPI
