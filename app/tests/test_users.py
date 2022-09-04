@@ -1,11 +1,14 @@
 import pytest
+from jose import jwt
+
 from app import schemas
 from app.core.config import settings
-from jose import jwt
 
 
 def test_create_user(client, session):
-    res = client.post("/api/v1/users/", json={"email": "abc1@test.com", "password": "abc123"})
+    res = client.post(
+        "/api/v1/users/", json={"email": "abc1@test.com", "password": "abc123"}
+    )
     print(res.json())
     new_user = schemas.UserOut(**res.json())
     assert new_user.email == "abc1@test.com"
