@@ -5,7 +5,7 @@ from app.models import User
 from app.core.oauth import oauth, create_access_token
 from app.schemas import Token
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
-from app.utils import utils
+from app.utils import verify_password
 
 auth_router = APIRouter()
 
@@ -52,7 +52,7 @@ def login(
             status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials"
         )
 
-    if not utils.verify(user_credentials.password, user.password):
+    if not verify_password(user_credentials.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials"
         )
