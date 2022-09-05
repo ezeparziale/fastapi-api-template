@@ -1,4 +1,4 @@
-# :zap: Fastapi auth google tempalte
+# :zap: Fastapi auth google template
 
 Fastapi api with Google auth login and postgres db
 
