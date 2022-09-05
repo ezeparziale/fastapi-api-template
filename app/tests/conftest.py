@@ -3,11 +3,11 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app import models
 from app.core.config import settings
 from app.core.oauth import create_access_token
 from app.db.database import Base, get_db
 from app.main import app
+from app.models import Post
 
 SQLALCHEMY_DATABASE_URL = f"{settings.SQLALCHEMY_DATABASE_URI}"
 
@@ -67,10 +67,29 @@ def test_user2(client):
 
 @pytest.fixture
 def token(test_user):
-    return create_access_token({"user_id": test_user["id"]})
+    return create_access_token({"id": test_user["id"]})
 
 
 @pytest.fixture
 def authorized_client(client, token):
     client.headers = {**client.headers, "Authorization": f"Bearer {token}"}
     return client
+
+
+@pytest.fixture
+def test_posts(test_user, test_user2, session):
+    posts_data = [
+        {"title": "Title_1", "content": "Content_1", "owner_id": test_user["id"]},
+        {"title": "Title_2", "content": "Content_2", "owner_id": test_user["id"]},
+        {"title": "Title_2", "content": "Content_2", "owner_id": test_user2["id"]},
+    ]
+
+    def create_user_model(post):
+        return Post(**post)
+
+    post_map = map(create_user_model, posts_data)
+    posts = list(post_map)
+    session.add_all(posts)
+    session.commit()
+    post = session.query(Post).all()
+    return post
