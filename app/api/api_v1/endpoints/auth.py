@@ -1,3 +1,4 @@
+from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -8,20 +9,19 @@ from app.models import User
 from app.schemas import Token
 from app.utils import verify_password
 
-auth_router = APIRouter()
+router = APIRouter()
 
 
-@auth_router.get("/login_google")
+@router.get("/login_google")
 async def login_google(request: Request):
-    """
-    ### Login Google
+    """Login Google
     """
     redirect_uri = request.url_for("authorize")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
-@auth_router.get("/authorize")
-async def authorize(request: Request, db: Session = Depends(get_db)):
+@router.get("/authorize")
+async def authorize(request: Request, db: Session = Depends(get_db)) -> Any:
     """
     ### Authorize
     """
@@ -37,11 +37,14 @@ async def authorize(request: Request, db: Session = Depends(get_db)):
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@auth_router.post("/login", response_model=Token)
+@router.post("/login", response_model=Token)
 async def login(
     user_credentials: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
-):
+) -> Any:
+    """
+    ### Login user
+    """
     user = db.query(User).filter(User.email == user_credentials.username).first()
 
     if not user:

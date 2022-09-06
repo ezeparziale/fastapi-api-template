@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -18,7 +20,10 @@ def get_posts(
     limit: int = 10,
     skip: int = 0,
     search: str | None = "",
-):
+ ) -> Any:
+    """
+    ### Get post list
+    """
     posts = (
         db.query(Post, func.count(Vote.post_id).label("votes"))
         .join(Vote, Vote.post_id == Post.id, isouter=True)
@@ -36,7 +41,10 @@ def create_posts(
     post: PostCreate,
     db: Session = Depends(get_db),
     current_user: int = Depends(get_current_user),
-):
+) -> Any:
+    """
+    ### Create post
+    """
     new_post = Post(owner_id=current_user.id, **post.dict())
     db.add(new_post)
     db.commit()
@@ -49,7 +57,10 @@ def get_post(
     id: int,
     db: Session = Depends(get_db),
     current_user: int = Depends(get_current_user),
-):
+) -> Any:
+    """
+    ### Get post by id
+    """
     post = (
         db.query(Post, func.count(Vote.post_id).label("votes"))
         .join(Vote, Vote.post_id == Post.id, isouter=True)
@@ -70,7 +81,10 @@ def delete_post(
     id: int,
     db: Session = Depends(get_db),
     current_user: int = Depends(get_current_user),
-):
+) -> Any:
+    """
+    ### Delete post
+    """
     post_query = db.query(Post).filter(Post.id == id)
 
     post = post_query.first()

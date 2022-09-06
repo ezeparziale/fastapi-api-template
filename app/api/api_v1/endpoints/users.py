@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -11,10 +13,15 @@ router = APIRouter()
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=UserOut)
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
+def create_user(user: UserCreate, db: Session = Depends(get_db)) -> Any:
     """
     ### Create user
     """
+    if db.query(User).filter_by(email = user.email).first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"This username already exists!",
+        )        
     hashed_password = get_password_hash(user.password)
     user.password = hashed_password
     new_user = User(**user.dict())
@@ -25,7 +32,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/me", response_model=UserOut)
-def get_user_me(current_user: User = Depends(get_current_user)):
+def get_user_me(current_user: User = Depends(get_current_user)) -> Any:
     """
     ### Get current user info
     """
@@ -37,9 +44,9 @@ def get_user(
     id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> Any:
     """
-    ### Get user
+    ### Get user by id
     """
     user = db.query(User).filter(User.id == id).first()
     if not user:

@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -14,8 +16,10 @@ def vote(
     vote: VoteSchema,
     db: Session = Depends(get_db),
     current_user: int = Depends(get_current_user),
-):
-
+) -> Any:
+    """
+    ### Vote a post
+    """
     post = db.query(Post).filter(Post.id == vote.post_id).first()
     if not post:
         raise HTTPException(

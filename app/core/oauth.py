@@ -26,10 +26,10 @@ oauth.register(
     client_kwargs={"scope": settings.GOOGLE_SCOPES},
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/login")
 
 
-def create_access_token(data: dict):
+def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
@@ -37,7 +37,14 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 
-def verify_access_token(token: str, credentials_exception):
+async def get_current_user(
+    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         id: str = payload.get("id")
@@ -47,19 +54,7 @@ def verify_access_token(token: str, credentials_exception):
     except JWTError:
         raise credentials_exception
 
-    return token_data
-
-
-async def get_current_user(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    token = verify_access_token(token, credentials_exception)
-    user = db.query(User).filter(User.id == token.id).first()
+    user = db.query(User).filter(User.id == token_data.id).first()
     if user is None:
         raise credentials_exception
     return user
