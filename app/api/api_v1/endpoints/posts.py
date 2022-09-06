@@ -20,7 +20,7 @@ def get_posts(
     limit: int = 10,
     skip: int = 0,
     search: str | None = "",
- ) -> Any:
+) -> Any:
     """
     ### Get post list
     """

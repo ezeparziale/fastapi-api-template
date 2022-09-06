@@ -1,4 +1,5 @@
 from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -14,7 +15,8 @@ router = APIRouter()
 
 @router.get("/login_google")
 async def login_google(request: Request):
-    """Login Google
+    """
+    ### Login Google
     """
     redirect_uri = request.url_for("authorize")
     return await oauth.google.authorize_redirect(request, redirect_uri)
