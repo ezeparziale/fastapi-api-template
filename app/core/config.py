@@ -1,6 +1,6 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List, Union
 
-from pydantic import BaseSettings, PostgresDsn, validator
+from pydantic import BaseSettings, PostgresDsn, validator, AnyHttpUrl
 
 
 class Settings(BaseSettings):
@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
 
     # Google
     GOOGLE_CLIENT_ID: str
