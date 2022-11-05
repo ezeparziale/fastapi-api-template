@@ -4,7 +4,7 @@ pydantic[dotenv, email]==1.10.2
 Authlib==1.1.0
 itsdangerous==2.1.2
 httpx==0.23.0
-SQLAlchemy==1.4.40
+SQLAlchemy==1.4.42
 psycopg2==2.9.3
 python-jose==3.3.0
 passlib[bcrypt]==1.7.4
