@@ -1,6 +1,6 @@
 fastapi==0.86.0
 uvicorn==0.19.0
-pydantic[dotenv, email]==1.10.1
+pydantic[dotenv, email]==1.10.2
 Authlib==1.0.1
 itsdangerous==2.1.2
 httpx==0.23.0
