@@ -1,6 +1,7 @@
 from fastapi import FastAPI
-from starlette.middleware.sessions import SessionMiddleware
+from fastapi.responses import RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.api.api_v1.api import api_router
 from app.core.config import settings
@@ -24,3 +25,8 @@ if settings.BACKEND_CORS_ORIGINS:
 
 # Routes
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+@app.get("/", include_in_schema=False)
+async def docs_redirect():
+    return RedirectResponse(url="/docs")
