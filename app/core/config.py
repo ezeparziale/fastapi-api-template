@@ -1,6 +1,6 @@
-from typing import Any, Dict, Optional, List, Union
+from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseSettings, PostgresDsn, validator, AnyHttpUrl
+from pydantic import AnyHttpUrl, BaseSettings, PostgresDsn, validator
 
 
 class Settings(BaseSettings):
