@@ -1,4 +1,4 @@
-fastapi==0.81.0
+fastapi==0.86.0
 uvicorn==0.18.3
 pydantic[dotenv, email]==1.10.1
 Authlib==1.0.1
