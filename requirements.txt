@@ -8,6 +8,6 @@ SQLAlchemy==1.4.42
 psycopg2==2.9.5
 python-jose==3.3.0
 passlib[bcrypt]==1.7.4
-pytest==7.1.3
+pytest==7.2.0
 alembic==1.8.1
 python-multipart==0.0.5
