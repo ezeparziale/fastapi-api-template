@@ -38,6 +38,20 @@ https://developers.google.com/workspace/guides/create-credentials
 openssl rand -base64 64
 ```
 
+:construction: Before first run:
+
+Run `docker-compose` :whale: to start the database server
+
+```bash
+docker compose -f "docker-compose.yml" up -d --build adminer db
+```
+
+and init the database with alembic:
+
+```bash
+alembic upgrade head
+```
+
 :key: Create a self-signed certificate with openssl:
 
 ```bash
