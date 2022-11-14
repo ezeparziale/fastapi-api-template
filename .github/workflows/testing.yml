@@ -11,7 +11,7 @@ jobs:
       
     env:
       ACCESS_TOKEN_EXPIRE_MINUTES: ${{secrets.ACCESS_TOKEN_EXPIRE_MINUTES}}
-      ALGORITHM: ${{secrets.ACCESS_TOKEN_EXPIRE_MINUTES}}
+      ALGORITHM: ${{secrets.ALGORITHM}}
       BACKEND_CORS_ORIGINS: ${{secrets.BACKEND_CORS_ORIGINS}}
       GOOGLE_CLIENT_ID: ${{secrets.GOOGLE_CLIENT_ID}}
       GOOGLE_CLIENT_SECRET: ${{secrets.GOOGLE_CLIENT_SECRET}}
@@ -36,6 +36,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
     runs-on: ubuntu-latest
 
     steps:
