@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.oauth import get_current_user
 from app.db.database import get_db
-from app.models import Post, Vote
+from app.models import Post, Vote, User
 from app.schemas import Post as PostSchema
 from app.schemas import PostCreate, PostOUT
 
@@ -16,7 +16,7 @@ router = APIRouter()
 @router.get("/", response_model=list[PostOUT])
 def get_posts(
     db: Session = Depends(get_db),
-    current_user: int = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     limit: int = 10,
     skip: int = 0,
     search: str | None = "",
@@ -40,7 +40,7 @@ def get_posts(
 def create_posts(
     post: PostCreate,
     db: Session = Depends(get_db),
-    current_user: int = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> Any:
     """
     ### Create post
@@ -56,7 +56,7 @@ def create_posts(
 def get_post(
     id: int,
     db: Session = Depends(get_db),
-    current_user: int = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> Any:
     """
     ### Get post by id
@@ -80,7 +80,7 @@ def get_post(
 def delete_post(
     id: int,
     db: Session = Depends(get_db),
-    current_user: int = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> Any:
     """
     ### Delete post
@@ -111,7 +111,7 @@ def update_post(
     id: int,
     post: PostCreate,
     db: Session = Depends(get_db),
-    current_user: int = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     post_query = db.query(Post).filter(Post.id == id)
     post_to_update = post_query.first()
