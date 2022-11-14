@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.oauth import get_current_user
 from app.db.database import get_db
-from app.models import Post, Vote
+from app.models import Post, Vote, User
 from app.schemas import Vote as VoteSchema
 
 router = APIRouter()
@@ -15,7 +15,7 @@ router = APIRouter()
 def vote(
     vote: VoteSchema,
     db: Session = Depends(get_db),
-    current_user: int = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> Any:
     """
     ### Vote a post
