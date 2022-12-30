@@ -113,6 +113,9 @@ def update_post(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    """
+    ### Update post
+    """
     post_query = db.query(Post).filter(Post.id == id)
     post_to_update = post_query.first()
     if post_to_update is None:
