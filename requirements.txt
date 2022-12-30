@@ -1,7 +1,7 @@
 fastapi==0.88.0
 uvicorn==0.20.0
 pydantic[dotenv, email]==1.10.4
-Authlib==1.1.0
+Authlib==1.2.0
 itsdangerous==2.1.2
 httpx==0.23.0
 SQLAlchemy==1.4.42
