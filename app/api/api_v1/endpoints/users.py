@@ -20,7 +20,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> Any:
     if db.query(User).filter_by(email=user.email).first():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"This username already exists!",
+            detail="This username already exists!",
         )
     hashed_password = get_password_hash(user.password)
     user.password = hashed_password

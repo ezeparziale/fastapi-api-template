@@ -10,7 +10,6 @@ def test_get_all_posts(authorized_client, test_posts):
     def validate(post):
         return PostOUT(**post)
 
-    post_map = map(validate, res.json())
     print(res.json())
 
     assert len(res.json()) == len(test_posts)

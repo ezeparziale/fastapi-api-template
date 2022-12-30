@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.oauth import get_current_user
 from app.db.database import get_db
-from app.models import Post, Vote, User
+from app.models import Post, User, Vote
 from app.schemas import Post as PostSchema
 from app.schemas import PostCreate, PostOUT
 
