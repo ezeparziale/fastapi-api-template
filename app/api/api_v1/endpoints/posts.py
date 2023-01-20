@@ -16,7 +16,7 @@ def get_posts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     limit: int = 10,
-    skip: int = 0,
+    offset: int = 0,
     search: str | None = "",
 ) -> list[PostOut]:
     """
@@ -28,7 +28,7 @@ def get_posts(
         .group_by(Post.id)
         .filter(Post.title.contains(search))
         .limit(limit)
-        .offset(skip)
+        .offset(offset)
         .all()
     )
     return posts

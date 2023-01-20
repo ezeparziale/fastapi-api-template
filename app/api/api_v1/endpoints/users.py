@@ -60,7 +60,7 @@ def get_users(
     db: Session = Depends(get_db),
     current_user: int = Depends(get_current_user),
     limit: int = 10,
-    skip: int = 0,
+    offset: int = 0,
     search: str | None = "",
 ) -> list[UserOut]:
     """
@@ -70,7 +70,7 @@ def get_users(
         db.query(User)
         .filter(User.email.contains(search))
         .limit(limit)
-        .offset(skip)
+        .offset(offset)
         .all()
     )
     return users
