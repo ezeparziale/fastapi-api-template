@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 @router.get("/login_google")
-async def login_google(request: Request):
+async def login_google(request: Request) -> Any:
     """
     ### Login Google
     """

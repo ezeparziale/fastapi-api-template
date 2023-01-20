@@ -1,5 +1,3 @@
-from typing import Any
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -12,8 +10,8 @@ from app.utils import get_password_hash
 router = APIRouter()
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=UserOut)
-def create_user(user: UserCreate, db: Session = Depends(get_db)) -> Any:
+@router.post("/", status_code=status.HTTP_201_CREATED)
+def create_user(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
     """
     ### Create user
     """
@@ -31,20 +29,20 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> Any:
     return new_user
 
 
-@router.get("/me", response_model=UserOut)
-def get_user_me(current_user: User = Depends(get_current_user)) -> Any:
+@router.get("/me")
+def get_user_me(current_user: User = Depends(get_current_user)) -> UserOut:
     """
     ### Get current user info
     """
     return current_user
 
 
-@router.get("/{id}", response_model=UserOut)
+@router.get("/{id}")
 def get_user(
     id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> Any:
+) -> UserOut:
     """
     ### Get user by id
     """
@@ -57,14 +55,14 @@ def get_user(
     return user
 
 
-@router.get("/", response_model=list[UserOut])
+@router.get("/")
 def get_users(
     db: Session = Depends(get_db),
     current_user: int = Depends(get_current_user),
     limit: int = 10,
     skip: int = 0,
     search: str | None = "",
-):
+) -> list[UserOut]:
     """
     ### Get all users info
     """

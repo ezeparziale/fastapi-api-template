@@ -1,5 +1,3 @@
-from typing import Any
-
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -13,14 +11,14 @@ from app.schemas import PostCreate, PostOUT
 router = APIRouter()
 
 
-@router.get("/", response_model=list[PostOUT])
+@router.get("/")
 def get_posts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     limit: int = 10,
     skip: int = 0,
     search: str | None = "",
-) -> Any:
+) -> list[PostOUT]:
     """
     ### Get post list
     """
@@ -36,12 +34,12 @@ def get_posts(
     return posts
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=PostSchema)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create_posts(
     post: PostCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> Any:
+) -> PostSchema:
     """
     ### Create post
     """
@@ -52,12 +50,12 @@ def create_posts(
     return new_post
 
 
-@router.get("/{id}", response_model=PostOUT)
+@router.get("/{id}")
 def get_post(
     id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> Any:
+) -> PostOUT:
     """
     ### Get post by id
     """
@@ -81,7 +79,7 @@ def delete_post(
     id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> Any:
+) -> None:
     """
     ### Delete post
     """
@@ -106,13 +104,13 @@ def delete_post(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.put("/{id}", response_model=PostSchema)
+@router.put("/{id}")
 def update_post(
     id: int,
     post: PostCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> PostSchema:
     """
     ### Update post
     """
