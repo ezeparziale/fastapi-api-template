@@ -5,7 +5,7 @@ from app import schemas
 from app.core.config import settings
 
 
-def test_create_user(client, session):
+def test_create_user(client):
     res = client.post(
         "/api/v1/users/", json={"email": "abc1@test.com", "password": "abc123"}
     )
@@ -41,7 +41,7 @@ def test_login(client, test_user):
         ("abc1@test.com", None, 422),
     ],
 )
-def test_incorrent_login(test_user, client, email, password, status_code):
+def test_incorrent_login(client, email, password, status_code):
     res = client.post("/api/v1/login", data={"username": email, "password": password})
 
     assert res.status_code == status_code

@@ -42,7 +42,7 @@ def test_delete_vote_non_exist(authorized_client, test_posts):
     assert res.status_code == 404
 
 
-def test_vote_post_non_exist(authorized_client, test_posts):
+def test_vote_post_non_exist(authorized_client):
     res = authorized_client.post("/api/v1/votes/", json={"post_id": 9999999, "dir": 0})
     print(res.json())
     assert res.status_code == 404
