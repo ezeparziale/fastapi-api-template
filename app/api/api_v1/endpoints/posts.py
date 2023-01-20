@@ -6,7 +6,7 @@ from app.core.oauth import get_current_user
 from app.db.database import get_db
 from app.models import Post, User, Vote
 from app.schemas import Post as PostSchema
-from app.schemas import PostCreate, PostOUT
+from app.schemas import PostCreate, PostOut
 
 router = APIRouter()
 
@@ -18,7 +18,7 @@ def get_posts(
     limit: int = 10,
     skip: int = 0,
     search: str | None = "",
-) -> list[PostOUT]:
+) -> list[PostOut]:
     """
     ### Get post list
     """
@@ -55,7 +55,7 @@ def get_post(
     id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> PostOUT:
+) -> PostOut:
     """
     ### Get post by id
     """

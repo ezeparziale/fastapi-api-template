@@ -1,14 +1,14 @@
 import pytest
 
 from app.schemas import Post as PostSchema
-from app.schemas import PostOUT
+from app.schemas import PostOut
 
 
 def test_get_all_posts(authorized_client, test_posts):
     res = authorized_client.get("/api/v1/posts/")
 
     def validate(post):
-        return PostOUT(**post)
+        return PostOut(**post)
 
     map(validate, res.json())
     print(res.json())
@@ -38,7 +38,7 @@ def test_get_one_post_non_exist(authorized_client, test_posts):
 def test_get_one_post(authorized_client, test_posts):
     res = authorized_client.get(f"/api/v1/posts/{test_posts[0].id}")
     print(res.json())
-    post = PostOUT(**res.json())
+    post = PostOut(**res.json())
     print(post)
     assert post.Post.id == test_posts[0].id
     assert res.status_code == 200
