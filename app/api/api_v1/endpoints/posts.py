@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy import func
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
 from app.core.oauth import get_current_user
@@ -22,15 +22,15 @@ def get_posts(
     """
     ### Get post list
     """
-    posts = (
-        db.query(Post, func.count(Vote.post_id).label("votes"))
+    stmt_select = (
+        select(Post, func.count(Vote.post_id).label("votes"))
         .join(Vote, Vote.post_id == Post.id, isouter=True)
         .group_by(Post.id)
-        .filter(Post.title.contains(search))
+        .where(Post.title.contains(search))
         .limit(limit)
         .offset(offset)
-        .all()
     )
+    posts = db.execute(stmt_select).all()
     return posts
 
 
@@ -59,13 +59,14 @@ def get_post(
     """
     ### Get post by id
     """
-    post = (
-        db.query(Post, func.count(Vote.post_id).label("votes"))
+    stmt_select = (
+        select(Post, func.count(Vote.post_id).label("votes"))
         .join(Vote, Vote.post_id == Post.id, isouter=True)
         .group_by(Post.id)
-        .filter(Post.id == id)
-        .first()
+        .where(Post.id == id)
+        .limit(1)
     )
+    post = db.execute(stmt_select).first()
 
     if not post:
         raise HTTPException(
@@ -83,9 +84,10 @@ def delete_post(
     """
     ### Delete post
     """
-    post_query = db.query(Post).filter(Post.id == id)
+    stmt_select = select(Post).where(Post.id == id).limit(1)
+    post_query = db.execute(stmt_select)
 
-    post = post_query.first()
+    post = post_query.scalars().first()
 
     if post is None:
         raise HTTPException(
@@ -99,7 +101,10 @@ def delete_post(
             detail="Not authorized to perform requested action",
         )
 
-    post_query.delete(synchronize_session=False)
+    stmt_delete = (
+        delete(Post).where(Post.id == id).execution_options(synchronize_session=False)
+    )
+    db.execute(stmt_delete)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -114,8 +119,9 @@ def update_post(
     """
     ### Update post
     """
-    post_query = db.query(Post).filter(Post.id == id)
-    post_to_update = post_query.first()
+    stmt_select = select(Post).where(Post.id == id).limit(1)
+    post_to_update = db.execute(stmt_select).scalars().first()
+
     if post_to_update is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -128,6 +134,13 @@ def update_post(
             detail="Not authorized to perform requested action",
         )
 
-    post_query.update(post.dict(), synchronize_session=False)
+    stmt_update = (
+        update(Post)
+        .where(Post.id == id)
+        .values(post.dict())
+        .execution_options(synchronize_session=False)
+        .returning(Post)
+    )
+    result = db.scalars(stmt_update)
     db.commit()
-    return post_query.first()
+    return result.first()

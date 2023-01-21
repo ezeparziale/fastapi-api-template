@@ -1,6 +1,7 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.core.oauth import get_current_user
@@ -20,18 +21,21 @@ def vote(
     """
     ### Vote a post
     """
-    post = db.query(Post).filter(Post.id == vote.post_id).first()
+    stmt_select = select(Post).where(Post.id == vote.post_id)
+    post = db.execute(stmt_select).scalars().first()
+
     if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id: {vote.post_id} does not exist",
         )
 
-    vote_query = db.query(Vote).filter(
+    stmt_select_vote = select(Vote).where(
         Vote.post_id == vote.post_id, Vote.user_id == current_user.id
     )
 
-    found_vote = vote_query.first()
+    found_vote = db.execute(stmt_select_vote).scalars().first()
+
     if vote.dir == 1:
         if found_vote:
             raise HTTPException(
@@ -47,6 +51,12 @@ def vote(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Vote does not exist"
             )
-        vote_query.delete(synchronize_session=False)
+
+        stmt_delete_vote = (
+            delete(Vote)
+            .where(Vote.post_id == vote.post_id, Vote.user_id == current_user.id)
+            .execution_options(synchronize_session=False)
+        )
+        db.execute(stmt_delete_vote)
         db.commit()
         return {"message": "successfully deleted vote"}

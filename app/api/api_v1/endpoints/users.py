@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.oauth import get_current_user
@@ -15,11 +16,15 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
     """
     ### Create user
     """
-    if db.query(User).filter_by(email=user.email).first():
+    stmt_select = select(User).filter_by(email=user.email)
+    user_exists = db.execute(stmt_select).scalars().first()
+
+    if user_exists:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="This username already exists!",
         )
+
     hashed_password = get_password_hash(user.password)
     user.password = hashed_password
     new_user = User(**user.dict())
@@ -46,7 +51,8 @@ def get_user(
     """
     ### Get user by id
     """
-    user = db.query(User).filter(User.id == id).first()
+    stmt_select = select(User).where(User.id == id).limit(1)
+    user = db.execute(stmt_select).scalars().first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -66,11 +72,9 @@ def get_users(
     """
     ### Get all users info
     """
-    users = (
-        db.query(User)
-        .filter(User.email.contains(search))
-        .limit(limit)
-        .offset(offset)
-        .all()
+    stmt_select = (
+        select(User).where(User.email.contains(search)).limit(limit).offset(offset)
     )
+    users = db.execute(stmt_select).scalars().all()
+
     return users
