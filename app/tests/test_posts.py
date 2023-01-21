@@ -48,9 +48,7 @@ def test_get_one_post(authorized_client, test_posts):
     "title, content, published",
     [("Titulo1", "Contenido1", True), ("Titulo2", "Contenido2", False)],
 )
-def test_create_post(
-    authorized_client, test_user, title, content, published
-):
+def test_create_post(authorized_client, test_user, title, content, published):
     res = authorized_client.post(
         "/api/v1/posts/",
         json={"title": title, "content": content, "published": published},
