@@ -31,7 +31,7 @@ def get_posts(
         .offset(offset)
     )
     posts = db.execute(stmt_select).all()
-    return posts
+    return posts  # type: ignore[return-value]
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -72,7 +72,7 @@ def get_post(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found"
         )
-    return post
+    return post  # type: ignore[return-value]
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -106,7 +106,7 @@ def delete_post(
     )
     db.execute(stmt_delete)
     db.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)  # type: ignore[return-value]
 
 
 @router.put("/{id}")
@@ -137,10 +137,10 @@ def update_post(
     stmt_update = (
         update(Post)
         .where(Post.id == id)
-        .values(post.dict())
+        .values(post.dict())  # type: ignore[arg-type]
         .execution_options(synchronize_session=False)
         .returning(Post)
     )
     result = db.scalars(stmt_update)
     db.commit()
-    return result.first()
+    return result.first()  # type: ignore[return-value]

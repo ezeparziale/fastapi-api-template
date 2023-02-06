@@ -77,4 +77,4 @@ def get_users(
     )
     users = db.execute(stmt_select).scalars().all()
 
-    return users
+    return users  # type: ignore[return-value]
