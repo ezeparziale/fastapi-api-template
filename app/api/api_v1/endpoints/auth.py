@@ -13,17 +13,17 @@ from app.utils import verify_password
 router = APIRouter()
 
 
-@router.get("/login_google")
+@router.get("/login/google")
 async def login_google(request: Request) -> Any:
     """
     ### Login Google
     """
-    redirect_uri = request.url_for("authorize")
+    redirect_uri = request.url_for("auth_via_google")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
-@router.get("/authorize")
-async def authorize(request: Request, db: Session = Depends(get_db)) -> Any:
+@router.get("/auth/google")
+async def auth_via_google(request: Request, db: Session = Depends(get_db)) -> Any:
     """
     ### Authorize
     """
