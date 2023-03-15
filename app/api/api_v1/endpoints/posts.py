@@ -11,7 +11,7 @@ from app.schemas import PostCreate, PostOut
 router = APIRouter()
 
 
-@router.get("/")
+@router.get("/", status_code=status.HTTP_200_OK)
 def get_posts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -50,7 +50,7 @@ def create_posts(
     return new_post
 
 
-@router.get("/{id}")
+@router.get("/{id}", status_code=status.HTTP_200_OK)
 def get_post(
     id: int,
     db: Session = Depends(get_db),
@@ -109,7 +109,7 @@ def delete_post(
     return Response(status_code=status.HTTP_204_NO_CONTENT)  # type: ignore[return-value]
 
 
-@router.put("/{id}")
+@router.put("/{id}", status_code=status.HTTP_200_OK)
 def update_post(
     id: int,
     post: PostCreate,

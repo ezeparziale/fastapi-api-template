@@ -34,7 +34,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
     return new_user
 
 
-@router.get("/me")
+@router.get("/me", status_code=status.HTTP_200_OK)
 def get_user_me(current_user: User = Depends(get_current_user)) -> UserOut:
     """
     ### Get current user info
@@ -42,7 +42,7 @@ def get_user_me(current_user: User = Depends(get_current_user)) -> UserOut:
     return current_user
 
 
-@router.get("/{id}")
+@router.get("/{id}", status_code=status.HTTP_200_OK)
 def get_user(
     id: int,
     db: Session = Depends(get_db),
@@ -61,7 +61,7 @@ def get_user(
     return user
 
 
-@router.get("/")
+@router.get("/", status_code=status.HTTP_200_OK)
 def get_users(
     db: Session = Depends(get_db),
     current_user: int = Depends(get_current_user),
