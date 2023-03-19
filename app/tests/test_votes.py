@@ -26,7 +26,7 @@ def test_vote_twice_post(authorized_client, test_posts, test_vote):
     assert res.status_code == 409
 
 
-def test_delete_vote(authorized_client, test_posts):
+def test_delete_vote(authorized_client, test_posts, test_vote):
     res = authorized_client.post(
         "/api/v1/votes/", json={"post_id": test_posts[0].id, "dir": 0}
     )
