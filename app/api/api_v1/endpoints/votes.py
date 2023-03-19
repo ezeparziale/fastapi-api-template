@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.core.oauth import get_current_user
+from app.api.deps import CurrentUser
 from app.db.database import get_db
-from app.models import Post, User, Vote
+from app.models import Post, Vote
 from app.schemas import Vote as VoteSchema
 
 router = APIRouter()
@@ -16,7 +16,7 @@ router = APIRouter()
 def vote(
     vote: VoteSchema,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: CurrentUser = None,
 ) -> Any:
     """
     ### Vote a post
