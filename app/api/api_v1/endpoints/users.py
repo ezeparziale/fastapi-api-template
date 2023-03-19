@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.oauth import get_current_user
+from app.api.deps import CommonsDep, CurrentUser
 from app.db.database import get_db
 from app.models import User
 from app.schemas import UserCreate, UserOut
@@ -35,7 +35,9 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
 
 
 @router.get("/me", status_code=status.HTTP_200_OK)
-def get_user_me(current_user: User = Depends(get_current_user)) -> UserOut:
+def get_user_me(
+    current_user: CurrentUser = None,
+) -> UserOut:
     """
     ### Get current user info
     """
@@ -46,7 +48,7 @@ def get_user_me(current_user: User = Depends(get_current_user)) -> UserOut:
 def get_user(
     id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: CurrentUser = None,
 ) -> UserOut:
     """
     ### Get user by id
@@ -64,16 +66,17 @@ def get_user(
 @router.get("/", status_code=status.HTTP_200_OK)
 def get_users(
     db: Session = Depends(get_db),
-    current_user: int = Depends(get_current_user),
-    limit: int = 10,
-    offset: int = 0,
-    search: str | None = "",
+    current_user: CurrentUser = None,
+    commons: CommonsDep = None,
 ) -> list[UserOut]:
     """
     ### Get all users info
     """
     stmt_select = (
-        select(User).where(User.email.contains(search)).limit(limit).offset(offset)
+        select(User)
+        .where(User.email.contains(commons.search))
+        .limit(commons.limit)
+        .offset(commons.offset)
     )
     users = db.execute(stmt_select).scalars().all()
 
