@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
-from app.core.oauth import get_current_user
+from app.api.deps import CommonsDep, CurrentUser
 from app.db.database import get_db
-from app.models import Post, User, Vote
+from app.models import Post, Vote
 from app.schemas import Post as PostSchema
 from app.schemas import PostCreate, PostOut
 
@@ -14,10 +14,8 @@ router = APIRouter()
 @router.get("/", status_code=status.HTTP_200_OK)
 def get_posts(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-    limit: int = 10,
-    offset: int = 0,
-    search: str | None = "",
+    current_user: CurrentUser = None,
+    commons: CommonsDep = None,
 ) -> list[PostOut]:
     """
     ### Get post list
@@ -26,9 +24,9 @@ def get_posts(
         select(Post, func.count(Vote.post_id).label("votes"))
         .join(Vote, Vote.post_id == Post.id, isouter=True)
         .group_by(Post.id)
-        .where(Post.title.contains(search))
-        .limit(limit)
-        .offset(offset)
+        .where(Post.title.contains(commons.search))
+        .limit(commons.limit)
+        .offset(commons.offset)
     )
     posts = db.execute(stmt_select).all()
     return posts  # type: ignore[return-value]
@@ -38,7 +36,7 @@ def get_posts(
 def create_posts(
     post: PostCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: CurrentUser = None,
 ) -> PostSchema:
     """
     ### Create post
@@ -54,7 +52,7 @@ def create_posts(
 def get_post(
     id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: CurrentUser = None,
 ) -> PostOut:
     """
     ### Get post by id
@@ -79,7 +77,7 @@ def get_post(
 def delete_post(
     id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: CurrentUser = None,
 ) -> None:
     """
     ### Delete post
@@ -114,7 +112,7 @@ def update_post(
     id: int,
     post: PostCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: CurrentUser = None,
 ) -> PostSchema:
     """
     ### Update post
