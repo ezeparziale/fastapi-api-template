@@ -104,7 +104,7 @@ def delete_post(
     )
     db.execute(stmt_delete)
     db.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)  # type: ignore[return-value]
+    return Response(status_code=status.HTTP_204_NO_CONTENT)  # noqa: E501
 
 
 @router.put("/{id}", status_code=status.HTTP_200_OK)

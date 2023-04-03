@@ -28,4 +28,4 @@ class Post(Base):
     owner: Mapped[list["User"]] = relationship("User")  # noqa: F821
 
     def __repr__(self) -> str:
-        return f"Post(id={self.id}, title={self.title}, published={self.published}, owner_id={self.owner_id}, created_at={self.created_at}, owner={self.owner})"
+        return f"Post(id={self.id}, title={self.title}, published={self.published}, owner_id={self.owner_id}, created_at={self.created_at}, owner={self.owner})"  # noqa: E501
