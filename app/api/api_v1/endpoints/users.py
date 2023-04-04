@@ -36,7 +36,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
 
 @router.get("/me", status_code=status.HTTP_200_OK)
 def get_user_me(
-    current_user: CurrentUser = None,
+    current_user: CurrentUser = None,  # type: ignore
 ) -> UserOut:
     """
     ### Get current user info
@@ -48,7 +48,7 @@ def get_user_me(
 def get_user(
     id: int,
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,
+    current_user: CurrentUser = None,  # type: ignore
 ) -> UserOut:
     """
     ### Get user by id
@@ -66,8 +66,8 @@ def get_user(
 @router.get("/", status_code=status.HTTP_200_OK)
 def get_users(
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,
-    commons: CommonsDep = None,
+    current_user: CurrentUser = None,  # type: ignore
+    commons: CommonsDep = None,  # type: ignore
 ) -> list[UserOut]:
     """
     ### Get all users info

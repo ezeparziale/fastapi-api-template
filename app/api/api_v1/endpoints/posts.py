@@ -14,8 +14,8 @@ router = APIRouter()
 @router.get("/", status_code=status.HTTP_200_OK)
 def get_posts(
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,
-    commons: CommonsDep = None,
+    current_user: CurrentUser = None,  # type: ignore
+    commons: CommonsDep = None,  # type: ignore
 ) -> list[PostOut]:
     """
     ### Get post list
@@ -36,7 +36,7 @@ def get_posts(
 def create_posts(
     post: PostCreate,
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,
+    current_user: CurrentUser = None,  # type: ignore
 ) -> PostSchema:
     """
     ### Create post
@@ -52,7 +52,7 @@ def create_posts(
 def get_post(
     id: int,
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,
+    current_user: CurrentUser = None,  # type: ignore
 ) -> PostOut:
     """
     ### Get post by id
@@ -77,7 +77,7 @@ def get_post(
 def delete_post(
     id: int,
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,
+    current_user: CurrentUser = None,  # type: ignore
 ) -> None:
     """
     ### Delete post
@@ -104,7 +104,7 @@ def delete_post(
     )
     db.execute(stmt_delete)
     db.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)  # noqa: E501
+    return Response(status_code=status.HTTP_204_NO_CONTENT)  # type: ignore[return-value] # noqa: E501
 
 
 @router.put("/{id}", status_code=status.HTTP_200_OK)
@@ -112,7 +112,7 @@ def update_post(
     id: int,
     post: PostCreate,
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,
+    current_user: CurrentUser = None,  # type: ignore
 ) -> PostSchema:
     """
     ### Update post
