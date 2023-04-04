@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -46,7 +48,7 @@ def get_user_me(
 
 @router.get("/{id}", status_code=status.HTTP_200_OK)
 def get_user(
-    id: int,
+    id: Annotated[int, Path(title="The ID of the user to get")],
     db: Session = Depends(get_db),
     current_user: CurrentUser = None,  # type: ignore
 ) -> UserOut:
