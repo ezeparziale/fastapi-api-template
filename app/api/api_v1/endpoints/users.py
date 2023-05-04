@@ -48,7 +48,7 @@ def get_user_me(
 
 @router.get("/{id}", status_code=status.HTTP_200_OK)
 def get_user(
-    id: Annotated[int, Path(title="The ID of the user to get")],
+    id: Annotated[int, Path(description="The ID of the user to get")],
     db: Session = Depends(get_db),
     current_user: CurrentUser = None,  # type: ignore
 ) -> UserOut:

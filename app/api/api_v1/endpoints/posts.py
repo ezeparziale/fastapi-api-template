@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Response, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, Response, status
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
@@ -36,7 +36,7 @@ def get_posts(
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_posts(
-    post: PostCreate,
+    post: Annotated[PostCreate, Body(description="Post info")],
     db: Session = Depends(get_db),
     current_user: CurrentUser = None,  # type: ignore
 ) -> PostSchema:
@@ -52,7 +52,7 @@ def create_posts(
 
 @router.get("/{id}", status_code=status.HTTP_200_OK)
 def get_post(
-    id: Annotated[int, Path(title="The ID of the post to get")],
+    id: Annotated[int, Path(description="The ID of the post to get")],
     db: Session = Depends(get_db),
     current_user: CurrentUser = None,  # type: ignore
 ) -> PostOut:
@@ -77,7 +77,7 @@ def get_post(
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(
-    id: Annotated[int, Path(title="The ID of the post to delete")],
+    id: Annotated[int, Path(description="The ID of the post to delete")],
     db: Session = Depends(get_db),
     current_user: CurrentUser = None,  # type: ignore
 ) -> None:
@@ -111,8 +111,8 @@ def delete_post(
 
 @router.put("/{id}", status_code=status.HTTP_200_OK)
 def update_post(
-    id: Annotated[int, Path(title="The ID of the post to update")],
-    post: PostCreate,
+    id: Annotated[int, Path(description="The ID of the post to update")],
+    post: Annotated[PostCreate, Body(description="Post info to update")],
     db: Session = Depends(get_db),
     current_user: CurrentUser = None,  # type: ignore
 ) -> PostSchema:
