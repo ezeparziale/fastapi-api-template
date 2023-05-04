@@ -1,14 +1,19 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.schemas.user import UserOut
 
 
 class PostBase(BaseModel):
-    title: str
-    content: str
-    published: bool = True
+    title: str = Field(title="Title of post", example="My post title")
+    content: str = Field(title="Content of post", example="My post content")
+    published: bool = Field(
+        True,
+        title="Published",
+        description="Specifies whether the post has been published or not",
+        example=True,
+    )
 
 
 class PostCreate(PostBase):
@@ -16,9 +21,13 @@ class PostCreate(PostBase):
 
 
 class Post(PostBase):
-    id: int
-    created_at: datetime
-    owner_id: int
+    id: int = Field(title="ID of the post", example="1")
+    created_at: datetime = Field(
+        title="Created at",
+        description="The date and time that the post was created",
+        example="2023-05-04T01:05:54.988Z",
+    )
+    owner_id: int = Field(title="ID of the owner", example="1")
     owner: UserOut
 
     class Config:
@@ -27,7 +36,7 @@ class Post(PostBase):
 
 class PostOut(BaseModel):
     Post: Post
-    votes: int
+    votes: int = Field(title="Count of votes", example="1")
 
     class Config:
         orm_mode = True
