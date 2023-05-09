@@ -9,7 +9,8 @@ services:
     env_file:
       - ./.env
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - fastapi_demo_net
 
@@ -18,6 +19,7 @@ services:
     hostname: postgres_db
     container_name: postgres_db
     restart: always
+    user: ${POSTGRES_USER}
     ports:
       - 5432:5432
     environment:
@@ -28,6 +30,11 @@ services:
       - postgres-db:/var/lib/postgresql/data
     networks:
       - fastapi_demo_net
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   adminer:
     image: adminer:4.8.1
