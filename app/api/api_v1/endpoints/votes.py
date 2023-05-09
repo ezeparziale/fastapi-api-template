@@ -79,51 +79,44 @@ def vote_post(
     """
     ### Vote a post
     """
-    try:
-        stmt_select = select(Post).where(Post.id == vote.post_id)
-        post = db.execute(stmt_select).scalars().first()
+    stmt_select = select(Post).where(Post.id == vote.post_id)
+    post = db.execute(stmt_select).scalars().first()
 
-        if not post:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Post not found",
-            )
-
-        stmt_select_vote = select(Vote).where(
-            Vote.post_id == vote.post_id, Vote.user_id == current_user.id
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found",
         )
 
-        found_vote = db.execute(stmt_select_vote).scalars().first()
+    stmt_select_vote = select(Vote).where(
+        Vote.post_id == vote.post_id, Vote.user_id == current_user.id
+    )
 
-        if vote.dir == 1:
-            if found_vote:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="Post already voted by user",
-                )
-            new_vote = Vote(post_id=vote.post_id, user_id=current_user.id)
-            db.add(new_vote)
-            db.commit()
-            return {"message": "Successfully added vote"}
-        else:
-            if not found_vote:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Vote does not exist"
-                )
+    found_vote = db.execute(stmt_select_vote).scalars().first()
 
-            stmt_delete_vote = (
-                delete(Vote)
-                .where(Vote.post_id == vote.post_id, Vote.user_id == current_user.id)
-                .execution_options(synchronize_session=False)
-            )
-            db.execute(stmt_delete_vote)
-            db.commit()
+    if vote.dir == 1:
+        if found_vote:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Post already voted by user",
             )
-    except Exception as e:
-        logging.error(f"Error: {e}")
+        new_vote = Vote(post_id=vote.post_id, user_id=current_user.id)
+        db.add(new_vote)
+        db.commit()
+        return {"message": "Successfully added vote"}
+    else:
+        if not found_vote:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Vote does not exist"
+            )
+
+        stmt_delete_vote = (
+            delete(Vote)
+            .where(Vote.post_id == vote.post_id, Vote.user_id == current_user.id)
+            .execution_options(synchronize_session=False)
+        )
+        db.execute(stmt_delete_vote)
+        db.commit()
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal Server Error",
+            status_code=status.HTTP_204_NO_CONTENT,
         )
