@@ -7,13 +7,43 @@ from sqlalchemy.orm import Session
 from app.api.deps import CommonsDep, CurrentUser
 from app.db.database import get_db
 from app.models import User
-from app.schemas import UserCreate, UserOut
+from app.schemas import MessageDetail, UserCreate, UserOut
 from app.utils import get_password_hash
 
 router = APIRouter()
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        201: {
+            "description": "User created",
+            "model": UserOut,
+        },
+        401: {
+            "description": "Unauthorized",
+            "model": MessageDetail,
+            "content": {
+                "application/json": {"example": {"detail": "Authorization required"}}
+            },
+        },
+        409: {
+            "description": "User already exists",
+            "model": MessageDetail,
+            "content": {
+                "application/json": {"example": {"detail": "User already exists"}}
+            },
+        },
+        500: {
+            "description": "Internal Server Error",
+            "model": MessageDetail,
+            "content": {
+                "application/json": {"example": {"detail": "Internal Server Error"}}
+            },
+        },
+    },
+)
 def create_user(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
     """
     ### Create user
@@ -24,7 +54,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
     if user_exists:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="This username already exists!",
+            detail="User already exists",
         )
 
     hashed_password = get_password_hash(user.password)
