@@ -1,5 +1,7 @@
-from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
+import logging
+
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -30,3 +32,9 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 @app.get("/", include_in_schema=False)
 async def docs_redirect():
     return RedirectResponse(url="/docs")
+
+
+@app.exception_handler(500)
+async def handle_500_errors(request: Request, exc: Exception):
+    logging.error(f"Error: {exc}")
+    return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
