@@ -30,8 +30,7 @@ def test_delete_vote(authorized_client, test_posts, test_vote):
     res = authorized_client.post(
         "/api/v1/votes/", json={"post_id": test_posts[0].id, "dir": 0}
     )
-    print(res.json())
-    assert res.status_code == 201
+    assert res.status_code == 204
 
 
 def test_delete_vote_non_exist(authorized_client, test_posts):
