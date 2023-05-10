@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.api.default_responses import default_responses
 from app.api.deps import CommonsDep, CurrentUser
 from app.db.database import get_db
 from app.models import User
@@ -17,29 +18,16 @@ router = APIRouter()
     "/",
     status_code=status.HTTP_201_CREATED,
     responses={
+        **default_responses,
         201: {
             "description": "User created",
             "model": UserOut,
-        },
-        401: {
-            "description": "Unauthorized",
-            "model": MessageDetail,
-            "content": {
-                "application/json": {"example": {"detail": "Authorization required"}}
-            },
         },
         409: {
             "description": "User already exists",
             "model": MessageDetail,
             "content": {
                 "application/json": {"example": {"detail": "User already exists"}}
-            },
-        },
-        500: {
-            "description": "Internal Server Error",
-            "model": MessageDetail,
-            "content": {
-                "application/json": {"example": {"detail": "Internal Server Error"}}
             },
         },
     },
@@ -66,7 +54,17 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
     return new_user
 
 
-@router.get("/me", status_code=status.HTTP_200_OK)
+@router.get(
+    "/me",
+    status_code=status.HTTP_200_OK,
+    responses={
+        **default_responses,
+        200: {
+            "description": "User info",
+            "model": UserOut,
+        },
+    },
+)
 def get_user_me(
     current_user: CurrentUser = None,  # type: ignore
 ) -> UserOut:
@@ -76,7 +74,22 @@ def get_user_me(
     return current_user
 
 
-@router.get("/{id}", status_code=status.HTTP_200_OK)
+@router.get(
+    "/{id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        **default_responses,
+        200: {
+            "description": "User info",
+            "model": UserOut,
+        },
+        404: {
+            "description": "User not found",
+            "model": MessageDetail,
+            "content": {"application/json": {"example": {"detail": "User not found"}}},
+        },
+    },
+)
 def get_user(
     id: Annotated[int, Path(description="The ID of the user to get")],
     db: Session = Depends(get_db),
@@ -90,12 +103,27 @@ def get_user(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with: {id} does not exists",
+            detail="User not found",
         )
     return user
 
 
-@router.get("/", status_code=status.HTTP_200_OK)
+@router.get(
+    "/",
+    status_code=status.HTTP_200_OK,
+    responses={
+        **default_responses,
+        200: {
+            "description": "User info",
+            "model": list[UserOut],
+        },
+        404: {
+            "description": "User not found",
+            "model": MessageDetail,
+            "content": {"application/json": {"example": {"detail": "User not found"}}},
+        },
+    },
+)
 def get_users(
     db: Session = Depends(get_db),
     current_user: CurrentUser = None,  # type: ignore
