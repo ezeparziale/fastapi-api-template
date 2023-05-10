@@ -70,3 +70,11 @@ uvicorn app.main:app --reload --port 8000 --ssl-keyfile key.pem --ssl-certfile c
 - Google Auth login
 - Create users
 - Examples endpoints CRUD
+  - Posts
+  - Users
+  - Votes
+- JWT tokens
+- Middlewares
+- CORS
+- Complete swagger Api info
+- Postgres
