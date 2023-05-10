@@ -4,16 +4,33 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Path, Response, sta
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
+from app.api.default_responses import default_responses
 from app.api.deps import CommonsDep, CurrentUser
 from app.db.database import get_db
 from app.models import Post, Vote
-from app.schemas import Post as PostSchema
-from app.schemas import PostCreate, PostOut
+from app.schemas import (
+    MessageDetail,
+    NewPostOut,
+    PostCreateIn,
+    PostOut,
+    PostUpdateIn,
+    PostUpdateOut,
+)
 
 router = APIRouter()
 
 
-@router.get("/", status_code=status.HTTP_200_OK)
+@router.get(
+    "/",
+    status_code=status.HTTP_200_OK,
+    responses={
+        **default_responses,
+        200: {
+            "description": "List of posts",
+            "model": list[PostOut],
+        },
+    },
+)
 def get_posts(
     db: Session = Depends(get_db),
     current_user: CurrentUser = None,  # type: ignore
@@ -34,12 +51,22 @@ def get_posts(
     return posts  # type: ignore[return-value]
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        **default_responses,
+        201: {
+            "description": "Post created",
+            "model": NewPostOut,
+        },
+    },
+)
 def create_posts(
-    post: Annotated[PostCreate, Body(description="Post info")],
+    post: Annotated[PostCreateIn, Body(description="Post info")],
     db: Session = Depends(get_db),
     current_user: CurrentUser = None,  # type: ignore
-) -> PostSchema:
+) -> NewPostOut:
     """
     ### Create post
     """
@@ -50,7 +77,22 @@ def create_posts(
     return new_post
 
 
-@router.get("/{id}", status_code=status.HTTP_200_OK)
+@router.get(
+    "/{id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        **default_responses,
+        200: {
+            "description": "Post info",
+            "model": PostOut,
+        },
+        404: {
+            "description": "Post not found",
+            "model": MessageDetail,
+            "content": {"application/json": {"example": {"detail": "Post not found"}}},
+        },
+    },
+)
 def get_post(
     id: Annotated[int, Path(description="The ID of the post to get")],
     db: Session = Depends(get_db),
@@ -70,12 +112,35 @@ def get_post(
 
     if not post:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
         )
     return post  # type: ignore[return-value]
 
 
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        **default_responses,
+        204: {
+            "description": "Post deleted",
+        },
+        403: {
+            "description": "Forbidden",
+            "model": MessageDetail,
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Not authorized to perform requested action"}
+                }
+            },
+        },
+        404: {
+            "description": "Post not found",
+            "model": MessageDetail,
+            "content": {"application/json": {"example": {"detail": "Post not found"}}},
+        },
+    },
+)
 def delete_post(
     id: Annotated[int, Path(description="The ID of the post to delete")],
     db: Session = Depends(get_db),
@@ -92,7 +157,7 @@ def delete_post(
     if post is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Post with id {id} does not exist",
+            detail=f"Post not found",
         )
 
     if post.owner_id != current_user.id:
@@ -109,13 +174,37 @@ def delete_post(
     return Response(status_code=status.HTTP_204_NO_CONTENT)  # type: ignore[return-value] # noqa: E501
 
 
-@router.put("/{id}", status_code=status.HTTP_200_OK)
+@router.put(
+    "/{id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        **default_responses,
+        200: {
+            "description": "Post updated",
+            "model": PostUpdateOut,
+        },
+        403: {
+            "description": "Forbidden",
+            "model": MessageDetail,
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Not authorized to perform requested action"}
+                }
+            },
+        },
+        404: {
+            "description": "Post not found",
+            "model": MessageDetail,
+            "content": {"application/json": {"example": {"detail": "Post not found"}}},
+        },
+    },
+)
 def update_post(
     id: Annotated[int, Path(description="The ID of the post to update")],
-    post: Annotated[PostCreate, Body(description="Post info to update")],
+    post: Annotated[PostUpdateIn, Body(description="Post info to update")],
     db: Session = Depends(get_db),
     current_user: CurrentUser = None,  # type: ignore
-) -> PostSchema:
+) -> PostUpdateOut:
     """
     ### Update post
     """
@@ -125,7 +214,7 @@ def update_post(
     if post_to_update is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Post with id {id} does not exist",
+            detail=f"Post not found",
         )
 
     if post_to_update.owner_id != current_user.id:
