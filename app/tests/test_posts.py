@@ -1,6 +1,6 @@
 import pytest
 
-from app.schemas import Post as PostSchema
+from app.schemas import NewPostOut, PostUpdateOut
 from app.schemas import PostOut
 
 
@@ -55,7 +55,7 @@ def test_create_post(authorized_client, test_user, title, content, published):
     )
 
     print(res.json())
-    created_post = PostSchema(**res.json())
+    created_post = NewPostOut(**res.json())
 
     assert res.status_code == 201
     assert created_post.title == title
@@ -70,7 +70,7 @@ def test_create_post_default_published_true(authorized_client, test_user):
     )
 
     print(res.json())
-    created_post = PostSchema(**res.json())
+    created_post = NewPostOut(**res.json())
 
     assert res.status_code == 201
     assert created_post.title == "asd"
@@ -113,7 +113,7 @@ def test_update_post(authorized_client, test_posts):
     data = {"title": "new title", "content": "new content", "id": test_posts[0].id}
     res = authorized_client.put(f"/api/v1/posts/{test_posts[0].id}", json=data)
     print(res)
-    updated_post = PostSchema(**res.json())
+    updated_post = PostUpdateOut(**res.json())
     print(updated_post)
     assert res.status_code == 200
     assert updated_post.title == data["title"]
