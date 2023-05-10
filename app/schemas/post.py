@@ -16,11 +16,18 @@ class PostBase(BaseModel):
     )
 
 
-class PostCreate(PostBase):
+class PostCreateIn(PostBase):
     pass
 
+class PostUpdateIn(PostBase):
+    pass
 
-class Post(PostBase):
+class PostUpdateOut(PostBase):
+    class Config:
+        orm_mode = True
+
+
+class NewPostOut(PostBase):
     id: int = Field(title="ID of the post", example="1")
     created_at: datetime = Field(
         title="Created at",
@@ -35,7 +42,7 @@ class Post(PostBase):
 
 
 class PostOut(BaseModel):
-    Post: Post
+    Post: NewPostOut
     votes: int = Field(title="Count of votes", example="1")
 
     class Config:
