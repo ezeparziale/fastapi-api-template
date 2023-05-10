@@ -24,7 +24,7 @@ router = APIRouter()
     "/",
     status_code=status.HTTP_200_OK,
     responses={
-        **default_responses,
+        **default_responses,  # type: ignore
         200: {
             "description": "List of posts",
             "model": list[PostOut],
@@ -55,7 +55,7 @@ def get_posts(
     "/",
     status_code=status.HTTP_201_CREATED,
     responses={
-        **default_responses,
+        **default_responses,  # type: ignore
         201: {
             "description": "Post created",
             "model": NewPostOut,
@@ -81,7 +81,7 @@ def create_posts(
     "/{id}",
     status_code=status.HTTP_200_OK,
     responses={
-        **default_responses,
+        **default_responses,  # type: ignore
         200: {
             "description": "Post info",
             "model": PostOut,
@@ -121,7 +121,7 @@ def get_post(
     "/{id}",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        **default_responses,
+        **default_responses,  # type: ignore
         204: {
             "description": "Post deleted",
         },
@@ -178,7 +178,7 @@ def delete_post(
     "/{id}",
     status_code=status.HTTP_200_OK,
     responses={
-        **default_responses,
+        **default_responses,  # type: ignore
         200: {
             "description": "Post updated",
             "model": PostUpdateOut,

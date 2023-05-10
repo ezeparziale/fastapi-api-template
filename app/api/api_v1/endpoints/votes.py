@@ -18,7 +18,7 @@ router = APIRouter()
     "/",
     status_code=status.HTTP_201_CREATED,
     responses={
-        **default_responses,
+        **default_responses,  # type: ignore
         201: {
             "description": "Vote created",
             "model": Message,

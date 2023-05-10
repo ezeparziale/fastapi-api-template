@@ -18,7 +18,7 @@ router = APIRouter()
     "/",
     status_code=status.HTTP_201_CREATED,
     responses={
-        **default_responses,
+        **default_responses,  # type: ignore
         201: {
             "description": "User created",
             "model": UserOut,
@@ -58,7 +58,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
     "/me",
     status_code=status.HTTP_200_OK,
     responses={
-        **default_responses,
+        **default_responses,  # type: ignore
         200: {
             "description": "User info",
             "model": UserOut,
@@ -78,7 +78,7 @@ def get_user_me(
     "/{id}",
     status_code=status.HTTP_200_OK,
     responses={
-        **default_responses,
+        **default_responses,  # type: ignore
         200: {
             "description": "User info",
             "model": UserOut,
@@ -112,7 +112,7 @@ def get_user(
     "/",
     status_code=status.HTTP_200_OK,
     responses={
-        **default_responses,
+        **default_responses,  # type: ignore
         200: {
             "description": "User info",
             "model": list[UserOut],
