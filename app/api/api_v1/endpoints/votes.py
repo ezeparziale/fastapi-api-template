@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from app.api.default_responses import default_responses
 from app.api.deps import CurrentUser
 from app.db.database import get_db
 from app.models import Post, Vote
@@ -17,6 +18,7 @@ router = APIRouter()
     "/",
     status_code=status.HTTP_201_CREATED,
     responses={
+        **default_responses,
         201: {
             "description": "Vote created",
             "model": Message,
@@ -26,13 +28,6 @@ router = APIRouter()
         },
         204: {
             "description": "Vote deleted",
-        },
-        401: {
-            "description": "Unauthorized",
-            "model": MessageDetail,
-            "content": {
-                "application/json": {"example": {"detail": "Authorization required"}}
-            },
         },
         404: {
             "description": "Post or Vote not found",
@@ -59,13 +54,6 @@ router = APIRouter()
                 "application/json": {
                     "example": {"detail": "Post already voted by user"}
                 }
-            },
-        },
-        500: {
-            "description": "Internal Server Error",
-            "model": MessageDetail,
-            "content": {
-                "application/json": {"example": {"detail": "Internal Server Error"}}
             },
         },
     },
