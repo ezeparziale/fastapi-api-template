@@ -1,3 +1,4 @@
+from .health import APIStatus  # noqa: F401
 from .helpers import Message, MessageDetail  # noqa: F401
 from .post import (
     NewPostOut,

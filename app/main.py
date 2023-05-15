@@ -6,6 +6,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.api.api_v1.api import api_router
+from app.api.health import router as health_router
 from app.core.config import settings
 from app.middlewares import ProcessTimeHeaderMiddleware
 
@@ -41,6 +42,7 @@ async def handle_500_errors(request: Request, exc: Exception):
 
 # Routes
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(health_router, tags=["Health"])
 
 
 @app.get("/", include_in_schema=False)
