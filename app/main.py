@@ -11,7 +11,9 @@ from app.middlewares import ProcessTimeHeaderMiddleware
 
 # FastAPI
 app = FastAPI(
-    title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
 )
 
 # Middlewares
