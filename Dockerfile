@@ -13,3 +13,5 @@ COPY app/ ./app
 COPY key.pem cert.pem ./
 
 ENTRYPOINT [ "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5000", "--ssl-keyfile", "key.pem", "--ssl-certfile", "cert.pem" ]
+
+HEALTHCHECK --interval=10s --timeout=5s CMD curl -k --fail https://localhost:5000/health || exit 1
