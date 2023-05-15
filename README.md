@@ -73,6 +73,7 @@ uvicorn app.main:app --reload --port 8000 --ssl-keyfile key.pem --ssl-certfile c
   - Posts
   - Users
   - Votes
+- API healthcheck
 - JWT tokens
 - Middlewares
 - CORS
