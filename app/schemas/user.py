@@ -11,7 +11,11 @@ class UserOut(BaseModel):
         description="The date and time that the user was created",
         example="2023-05-04T01:05:54.988Z",
     )
-
+    updated_at: datetime = Field(
+        title="Updated at",
+        description="The date and time that the user was updated",
+        example="2023-05-04T01:05:54.988Z",
+    )
     class Config:
         orm_mode = True
 

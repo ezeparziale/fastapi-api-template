@@ -34,6 +34,11 @@ class NewPostOut(PostBase):
         description="The date and time that the post was created",
         example="2023-05-04T01:05:54.988Z",
     )
+    updated_at: datetime = Field(
+        title="Updated at",
+        description="The date and time that the post was updated",
+        example="2023-05-04T01:05:54.988Z",
+    )
     owner_id: int = Field(title="ID of the owner", example="1")
     owner: UserOut
 
