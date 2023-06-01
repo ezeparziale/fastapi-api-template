@@ -157,7 +157,7 @@ def delete_post(
     if post is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Post not found",
+            detail="Post not found",
         )
 
     if post.owner_id != current_user.id:
@@ -214,7 +214,7 @@ def update_post(
     if post_to_update is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Post not found",
+            detail="Post not found",
         )
 
     if post_to_update.owner_id != current_user.id:
@@ -226,7 +226,7 @@ def update_post(
     stmt_update = (
         update(Post)
         .where(Post.id == id)
-        .values(post.dict())  # type: ignore[arg-type]
+        .values(post.dict())
         .execution_options(synchronize_session=False)
         .returning(Post)
     )

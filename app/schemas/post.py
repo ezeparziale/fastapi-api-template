@@ -19,8 +19,10 @@ class PostBase(BaseModel):
 class PostCreateIn(PostBase):
     pass
 
+
 class PostUpdateIn(PostBase):
     pass
+
 
 class PostUpdateOut(PostBase):
     class Config:
