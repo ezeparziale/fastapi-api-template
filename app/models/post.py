@@ -6,10 +6,11 @@ from sqlalchemy.sql.expression import text
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 
 from app.db.database import Base
+from app.models.mixin import TimestampMixin
 from app.models.user import User
 
 
-class Post(Base):
+class Post(Base, TimestampMixin):
     __tablename__ = "posts"
 
     id: Mapped[int] = mapped_column(primary_key=True, nullable=False)
@@ -18,9 +19,6 @@ class Post(Base):
 
     published: Mapped[bool] = mapped_column(
         Boolean, server_default="TRUE", nullable=False
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), server_default=text("now()"), nullable=False
     )
     owner_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False

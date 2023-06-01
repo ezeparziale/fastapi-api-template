@@ -2,9 +2,10 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.database import Base
+from app.models.mixin import TimestampMixin
 
 
-class Vote(Base):
+class Vote(Base, TimestampMixin):
     __tablename__ = "votes"
 
     user_id: Mapped[int] = mapped_column(
