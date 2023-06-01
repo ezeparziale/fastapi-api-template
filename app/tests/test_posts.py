@@ -1,10 +1,11 @@
 import pytest
+from fastapi.testclient import TestClient
 
-from app.schemas import NewPostOut, PostUpdateOut
-from app.schemas import PostOut
+from app.models import Post, User
+from app.schemas import NewPostOut, PostOut, PostUpdateOut
 
 
-def test_get_all_posts(authorized_client, test_posts):
+def test_get_all_posts(authorized_client: TestClient, test_posts: list[Post]):
     res = authorized_client.get("/api/v1/posts/")
 
     def validate(post):
@@ -17,25 +18,25 @@ def test_get_all_posts(authorized_client, test_posts):
     assert res.status_code == 200
 
 
-def test_unauthorized_user_get_all_posts(client):
+def test_unauthorized_user_get_all_posts(client: TestClient):
     res = client.get("/api/v1/posts/")
     print(res.json())
     assert res.status_code == 401
 
 
-def test_unauthorized_user_get_one_posts(client, test_posts):
+def test_unauthorized_user_get_one_posts(client: TestClient, test_posts: list[Post]):
     res = client.get(f"/api/v1/posts/{test_posts[0].id}")
     print(res.json())
     assert res.status_code == 401
 
 
-def test_get_one_post_non_exist(authorized_client):
+def test_get_one_post_non_exist(authorized_client: TestClient):
     res = authorized_client.get("/api/v1/posts/999999999999")
     print(res.json())
     assert res.status_code == 404
 
 
-def test_get_one_post(authorized_client, test_posts):
+def test_get_one_post(authorized_client: TestClient, test_posts: list[Post]):
     res = authorized_client.get(f"/api/v1/posts/{test_posts[0].id}")
     print(res.json())
     post = PostOut(**res.json())
@@ -48,7 +49,13 @@ def test_get_one_post(authorized_client, test_posts):
     "title, content, published",
     [("Titulo1", "Contenido1", True), ("Titulo2", "Contenido2", False)],
 )
-def test_create_post(authorized_client, test_user, title, content, published):
+def test_create_post(
+    authorized_client: TestClient,
+    test_user: User,
+    title: str,
+    content: str,
+    published: bool,
+):
     res = authorized_client.post(
         "/api/v1/posts/",
         json={"title": title, "content": content, "published": published},
@@ -64,7 +71,9 @@ def test_create_post(authorized_client, test_user, title, content, published):
     assert created_post.owner_id == test_user["id"]
 
 
-def test_create_post_default_published_true(authorized_client, test_user):
+def test_create_post_default_published_true(
+    authorized_client: TestClient, test_user: User
+):
     res = authorized_client.post(
         "/api/v1/posts/", json={"title": "asd", "content": "qwe"}
     )
@@ -79,37 +88,37 @@ def test_create_post_default_published_true(authorized_client, test_user):
     assert created_post.owner_id == test_user["id"]
 
 
-def test_unauthorized_create_post(client):
+def test_unauthorized_create_post(client: TestClient):
     res = client.post("/api/v1/posts/", json={"title": "asd", "content": "qwe"})
     print(res.json())
     assert res.status_code == 401
 
 
-def test_unauthorized_delete_post(client, test_posts):
+def test_unauthorized_delete_post(client: TestClient, test_posts: list[Post]):
     res = client.delete(f"/api/v1/posts/{test_posts[0].id}")
     print(res.json())
     assert res.status_code == 401
 
 
-def test_delete_post_success(authorized_client, test_posts):
+def test_delete_post_success(authorized_client: TestClient, test_posts: list[Post]):
     res = authorized_client.delete(f"/api/v1/posts/{test_posts[0].id}")
     print(res)
     assert res.status_code == 204
 
 
-def test_delete_post_non_exists(authorized_client):
+def test_delete_post_non_exists(authorized_client: TestClient):
     res = authorized_client.delete("v/posts/9999999999")
     print(res)
     assert res.status_code == 404
 
 
-def test_delete_other_user_post(authorized_client, test_posts):
+def test_delete_other_user_post(authorized_client: TestClient, test_posts: list[Post]):
     res = authorized_client.delete(f"/api/v1/posts/{test_posts[2].id}")
     print(res)
     assert res.status_code == 403
 
 
-def test_update_post(authorized_client, test_posts):
+def test_update_post(authorized_client: TestClient, test_posts: list[Post]):
     data = {"title": "new title", "content": "new content", "id": test_posts[0].id}
     res = authorized_client.put(f"/api/v1/posts/{test_posts[0].id}", json=data)
     print(res)
@@ -120,20 +129,20 @@ def test_update_post(authorized_client, test_posts):
     assert updated_post.content == data["content"]
 
 
-def test_update_other_user_post(authorized_client, test_posts):
+def test_update_other_user_post(authorized_client: TestClient, test_posts: list[Post]):
     data = {"title": "new title", "content": "new content", "id": test_posts[2].id}
     res = authorized_client.put(f"/api/v1/posts/{test_posts[2].id}", json=data)
     print(res)
     assert res.status_code == 403
 
 
-def test_unauthorized_update_post(client, test_posts):
+def test_unauthorized_update_post(client: TestClient, test_posts: list[Post]):
     res = client.put(f"/api/v1/posts/{test_posts[0].id}")
     print(res.json())
     assert res.status_code == 401
 
 
-def test_update_post_non_exists(authorized_client, test_posts):
+def test_update_post_non_exists(authorized_client: TestClient, test_posts: list[Post]):
     data = {"title": "new title", "content": "new content", "id": test_posts[2].id}
     res = authorized_client.put("/api/v1/posts/9999999999", json=data)
     print(res)

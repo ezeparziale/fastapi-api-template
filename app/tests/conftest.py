@@ -1,13 +1,13 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import settings
 from app.core.oauth import create_access_token
 from app.db.database import Base, get_db
 from app.main import app
-from app.models import Post
+from app.models import Post, User
 
 SQLALCHEMY_DATABASE_URL = f"{settings.SQLALCHEMY_DATABASE_URI}"
 
@@ -17,7 +17,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 
 @pytest.fixture()
-def session():
+def session() -> Session:  # type: ignore
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
@@ -28,7 +28,7 @@ def session():
 
 
 @pytest.fixture()
-def client(session):
+def client(session: Session) -> TestClient:  # type: ignore
     def override_get_db():
         try:
             yield session
@@ -41,7 +41,7 @@ def client(session):
 
 
 @pytest.fixture
-def test_user(client):
+def test_user(client: TestClient) -> User:
     user_data = {"email": "abc1@test.com", "password": "abc123"}
     res = client.post("/api/v1/users/", json=user_data)
     assert res.status_code == 201
@@ -52,7 +52,7 @@ def test_user(client):
 
 
 @pytest.fixture
-def test_user2(client):
+def test_user2(client: TestClient) -> User:
     user_data = {"email": "abc2@test.com", "password": "abc123"}
     res = client.post("/api/v1/users/", json=user_data)
     assert res.status_code == 201
@@ -63,18 +63,18 @@ def test_user2(client):
 
 
 @pytest.fixture
-def token(test_user):
+def token(test_user: User) -> str:
     return create_access_token({"id": test_user["id"]})
 
 
 @pytest.fixture
-def authorized_client(client, token):
-    client.headers = {**client.headers, "Authorization": f"Bearer {token}"}
+def authorized_client(client: TestClient, token: str) -> TestClient:
+    client.headers = {**client.headers, "Authorization": f"Bearer {token}"}  # type: ignore
     return client
 
 
 @pytest.fixture
-def test_posts(test_user, test_user2, session):
+def test_posts(test_user: User, test_user2: User, session: Session) -> list[Post]:
     posts_data = [
         {"title": "Title_1", "content": "Content_1", "owner_id": test_user["id"]},
         {"title": "Title_2", "content": "Content_2", "owner_id": test_user["id"]},
