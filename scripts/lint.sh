@@ -3,7 +3,7 @@
 set -e
 set -x
 
-mypy app
-ruff app
-black app --check
-isort app --profile=black --check-only
+mypy app alembic
+ruff app alembic
+black app alembic --check
+isort app alembic --profile=black --check-only
