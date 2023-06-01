@@ -10,11 +10,10 @@ jobs:
           python-version: 3.x
       - run: pip install --upgrade pip wheel
       - run: pip install bandit black codespell ruff isort mypy pytest pyupgrade safety
+      - name: Lint
+        run: bash scripts/lint.sh
       - run: bandit --recursive --skip B101,B105 .  # B101 is assert statements, B105 for token URL
-      - run: black --check . || true
       # - run: codespell  # --ignore-words-list="" --skip="*.css,*.js,*.lock"
-      - run: ruff
-      - run: isort --check-only --profile black . || true
       - run: pip install -r requirements.txt || pip install --editable . || pip install .
       - run: mkdir --parents --verbose .mypy_cache
       - run: mypy --ignore-missing-imports --install-types --non-interactive .
