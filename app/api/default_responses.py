@@ -1,6 +1,6 @@
 from app.schemas import MessageDetail
 
-default_responses = {
+default_responses: dict = {
     401: {
         "description": "Unauthorized",
         "model": MessageDetail,
