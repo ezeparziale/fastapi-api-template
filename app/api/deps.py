@@ -9,10 +9,17 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 class CommonQueryParams:
-    def __init__(self, offset: int = 0, limit: int = 10, search: str | None = ""):
+    def __init__(
+        self,
+        offset: int = 0,
+        limit: int = 10,
+        search: str | None = "",
+        sort: str | None = "",
+    ):
         self.offset = offset
         self.limit = limit
         self.search = search
+        self.sort = sort
 
 
 CommonsDep = Annotated[CommonQueryParams, Depends(CommonQueryParams)]
