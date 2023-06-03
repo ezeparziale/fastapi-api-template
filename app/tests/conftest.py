@@ -81,7 +81,7 @@ def test_posts(test_user: User, test_user2: User, session: Session) -> list[Post
         {"title": "Title_2", "content": "Content_2", "owner_id": test_user2["id"]},
     ]
 
-    def create_user_model(post):
+    def create_user_model(post: dict):
         return Post(**post)
 
     post_map = map(create_user_model, posts_data)

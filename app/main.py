@@ -35,7 +35,7 @@ app.add_middleware(ProcessTimeHeaderMiddleware)
 
 
 @app.exception_handler(500)
-async def handle_500_errors(request: Request, exc: Exception):
+async def handle_500_errors(request: Request, exc: Exception) -> JSONResponse:
     logging.error(f"Error: {exc}")
     return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
@@ -46,5 +46,5 @@ app.include_router(health_router, tags=["Health"])
 
 
 @app.get("/", include_in_schema=False)
-async def docs_redirect():
+async def docs_redirect() -> RedirectResponse:
     return RedirectResponse(url="/docs")
