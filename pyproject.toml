@@ -1,0 +1,31 @@
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+select = [
+    "C",  # flake8-comprehensions
+    "E",  # pycodestyle errors
+    "F",  # pyflakes
+    "W",  # pycodestyle warnings
+    "B",  # flake8-bugbear
+]
+ignore = [
+    "E203",  # whitespace-before-punctuation
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+]
+unfixable = [
+    "B"  # flake8-bugbear
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = [
+    "E402",  # module-import-not-at-top-of-file
+    "F401"  # Module imported but unused
+]
+
+[tool.mypy]
+# strict = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+plugins = "pydantic.mypy"
