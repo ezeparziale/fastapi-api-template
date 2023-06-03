@@ -1,7 +1,8 @@
+from math import ceil
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, Response, status
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import delete, desc, func, select, update
 from sqlalchemy.orm import Session
 
 from app.api.default_responses import default_responses
@@ -35,19 +36,52 @@ def get_posts(
     db: Session = Depends(get_db),
     current_user: CurrentUser = None,  # type: ignore
     commons: CommonsDep = None,  # type: ignore
+    response: Response = None,  # type: ignore
 ) -> list[PostOut]:
     """
     ### Get post list
     """
+    # Query
     stmt_select = (
         select(Post, func.count(Vote.post_id).label("votes"))
         .join(Vote, Vote.post_id == Post.id, isouter=True)
         .group_by(Post.id)
-        .where(Post.title.contains(commons.search))
-        .limit(commons.limit)
-        .offset(commons.offset)
     )
+
+    # Search
+    if commons.search:
+        stmt_select = stmt_select.where(Post.title.contains(commons.search))
+
+    # Total rows filtered
+    total_row_filtered = (
+        db.execute(select(func.count()).select_from(stmt_select)).scalars().one()
+    )
+
+    # Sort
+    if commons.sort:
+        fields = commons.sort.split(",")
+        for field in fields:
+            if field.startswith("-"):
+                stmt_select = stmt_select.order_by(desc(getattr(Post, field[1:])))
+            else:
+                stmt_select = stmt_select.order_by(getattr(Post, field))
+    else:
+        stmt_select = stmt_select.order_by(Post.id)
+
+    # Pagination
+    stmt_select = stmt_select.limit(commons.limit).offset(commons.offset)
+
+    # Get data
     posts = db.execute(stmt_select).all()
+
+    # Total rows
+    total_rows = db.execute(select(func.count(Post.id))).scalars().one()
+
+    # Extra headers
+    response.headers["Total-Count"] = str(total_rows)
+    response.headers["Total-Count-Filtered"] = str(total_row_filtered)
+    response.headers["Pagination-Pages"] = str(ceil(total_rows / commons.limit))
+
     return posts  # type: ignore[return-value]
 
 

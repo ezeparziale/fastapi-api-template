@@ -1,7 +1,8 @@
+from math import ceil
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Path, Response, status
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
 from app.api.default_responses import default_responses
@@ -128,16 +129,46 @@ def get_users(
     db: Session = Depends(get_db),
     current_user: CurrentUser = None,  # type: ignore
     commons: CommonsDep = None,  # type: ignore
+    response: Response = None,  # type: ignore
 ) -> list[UserOut]:
     """
     ### Get all users info
     """
-    stmt_select = (
-        select(User)
-        .where(User.email.contains(commons.search))
-        .limit(commons.limit)
-        .offset(commons.offset)
+    # Query
+    stmt_select = select(User)
+
+    # Search
+    if commons.search:
+        stmt_select = stmt_select.where(User.email.contains(commons.search))
+
+    # Total rows filtered
+    total_row_filtered = (
+        db.execute(select(func.count()).select_from(stmt_select)).scalars().one()
     )
+
+    # Sort
+    if commons.sort:
+        fields = commons.sort.split(",")
+        for field in fields:
+            if field.startswith("-"):
+                stmt_select = stmt_select.order_by(desc(getattr(User, field[1:])))
+            else:
+                stmt_select = stmt_select.order_by(getattr(User, field))
+    else:
+        stmt_select = stmt_select.order_by(User.id)
+
+    # Pagination
+    stmt_select = stmt_select.limit(commons.limit).offset(commons.offset)
+
+    # Get data
     users = db.execute(stmt_select).scalars().all()
+
+    # Total rows
+    total_rows = db.execute(select(func.count(User.id))).scalars().one()
+
+    # Extra headers
+    response.headers["Total-Count"] = str(total_rows)
+    response.headers["Total-Count-Filtered"] = str(total_row_filtered)
+    response.headers["Pagination-Pages"] = str(ceil(total_rows / commons.limit))
 
     return users  # type: ignore[return-value]
