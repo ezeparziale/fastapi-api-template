@@ -107,7 +107,7 @@ def test_delete_post_success(authorized_client: TestClient, test_posts: list[Pos
 
 
 def test_delete_post_non_exists(authorized_client: TestClient):
-    res = authorized_client.delete(f"/api/v1/posts/9999999999")
+    res = authorized_client.delete("/api/v1/posts/9999999999")
     print(res)
     assert res.status_code == 404
 
