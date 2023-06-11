@@ -3,7 +3,8 @@ services:
   app:
     hostname: app
     container_name: app
-    build: .
+    build:
+      dockerfile: Dockerfile.dev
     ports: 
       - 5000:5000
     env_file:

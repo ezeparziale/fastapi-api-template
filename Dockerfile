@@ -7,11 +7,10 @@ ENV PYTHONUNBUFFERED 1
 
 RUN pip install --upgrade pip
 COPY ./requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY app/ ./app
-COPY key.pem cert.pem ./
 
-ENTRYPOINT [ "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5000", "--ssl-keyfile", "key.pem", "--ssl-certfile", "cert.pem" ]
+ENTRYPOINT [ "uvicorn", "app.main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "80" ]
 
-HEALTHCHECK --interval=10s --timeout=5s CMD curl -k --fail https://localhost:5000/health || exit 1
+HEALTHCHECK --interval=10s --timeout=5s CMD curl -k --fail https://localhost/health || exit 1
