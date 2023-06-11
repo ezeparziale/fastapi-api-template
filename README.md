@@ -1,6 +1,6 @@
-# :zap: Fastapi auth google template
+# :zap: Fastapi api template
 
-Fastapi api with Google auth login and postgres db
+Template API with FastApi
 
 ## :floppy_disk: Installation
 
