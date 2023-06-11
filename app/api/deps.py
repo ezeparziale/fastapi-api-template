@@ -11,9 +11,9 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 class CommonQueryParams:
     def __init__(
         self,
-        offset: Annotated[int | None, Query(description="Offset for pagination")] = 0,
-        limit: Annotated[int | None, Query(description="Limit for pagination")] = 10,
-        search: Annotated[str | None, Query(description="Search")] = "",
+        offset: Annotated[int, Query(description="Offset for pagination", ge=0)] = 0,
+        limit: Annotated[int, Query(description="Limit for pagination", gt=0)] = 10,
+        search: Annotated[str | None, Query(description="Search")] = None,
         sort: Annotated[
             str | None,
             Query(
@@ -37,7 +37,7 @@ class CommonQueryParams:
                     },
                 },
             ),
-        ] = "",
+        ] = None,
     ):
         self.offset = offset
         self.limit = limit
