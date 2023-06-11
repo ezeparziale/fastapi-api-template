@@ -60,8 +60,8 @@ router = APIRouter()
 )
 def vote_post(
     vote: VoteSchema,
+    current_user: CurrentUser,
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,  # type: ignore
 ) -> Any:
     """
     ### Vote a post

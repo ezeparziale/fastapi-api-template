@@ -33,10 +33,10 @@ router = APIRouter()
     },
 )
 def get_posts(
+    response: Response,
+    commons: CommonsDep,
+    current_user: CurrentUser,
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,  # type: ignore
-    commons: CommonsDep = None,  # type: ignore
-    response: Response = None,  # type: ignore
 ) -> list[PostOut]:
     """
     ### Get post list
@@ -53,9 +53,9 @@ def get_posts(
         stmt_select = stmt_select.where(Post.title.contains(commons.search))
 
     # Total rows filtered
-    total_row_filtered = (
-        db.execute(select(func.count()).select_from(stmt_select)).scalars().one()
-    )
+    total_row_filtered = db.execute(
+        select(func.count()).select_from(stmt_select.subquery())
+    ).scalar()
 
     # Sort
     if commons.sort:
@@ -98,8 +98,8 @@ def get_posts(
 )
 def create_posts(
     post: Annotated[PostCreateIn, Body(description="Post info")],
+    current_user: CurrentUser,
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,  # type: ignore
 ) -> NewPostOut:
     """
     ### Create post
@@ -129,8 +129,8 @@ def create_posts(
 )
 def get_post(
     id: Annotated[int, Path(description="The ID of the post to get")],
+    current_user: CurrentUser,
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,  # type: ignore
 ) -> PostOut:
     """
     ### Get post by id
@@ -177,8 +177,8 @@ def get_post(
 )
 def delete_post(
     id: Annotated[int, Path(description="The ID of the post to delete")],
+    current_user: CurrentUser,
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,  # type: ignore
 ) -> None:
     """
     ### Delete post
@@ -236,8 +236,8 @@ def delete_post(
 def update_post(
     id: Annotated[int, Path(description="The ID of the post to update")],
     post: Annotated[PostUpdateIn, Body(description="Post info to update")],
+    current_user: CurrentUser,
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,  # type: ignore
 ) -> PostUpdateOut:
     """
     ### Update post

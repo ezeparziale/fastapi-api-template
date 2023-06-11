@@ -67,7 +67,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
     },
 )
 def get_user_me(
-    current_user: CurrentUser = None,  # type: ignore
+    current_user: CurrentUser,
 ) -> UserOut:
     """
     ### Get current user info
@@ -93,8 +93,8 @@ def get_user_me(
 )
 def get_user(
     id: Annotated[int, Path(description="The ID of the user to get")],
+    current_user: CurrentUser,
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,  # type: ignore
 ) -> UserOut:
     """
     ### Get user by id
@@ -126,10 +126,10 @@ def get_user(
     },
 )
 def get_users(
+    response: Response,
+    commons: CommonsDep,
+    current_user: CurrentUser,
     db: Session = Depends(get_db),
-    current_user: CurrentUser = None,  # type: ignore
-    commons: CommonsDep = None,  # type: ignore
-    response: Response = None,  # type: ignore
 ) -> list[UserOut]:
     """
     ### Get all users info
@@ -142,9 +142,9 @@ def get_users(
         stmt_select = stmt_select.where(User.email.contains(commons.search))
 
     # Total rows filtered
-    total_row_filtered = (
-        db.execute(select(func.count()).select_from(stmt_select)).scalars().one()
-    )
+    total_row_filtered = db.execute(
+        select(func.count()).select_from(stmt_select.subquery())
+    ).scalar()
 
     # Sort
     if commons.sort:
