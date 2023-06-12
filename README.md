@@ -4,18 +4,33 @@ Template API with FastApi
 
 ## :floppy_disk: Installation
 
+Create virtual enviroment:
+
 ```bash
 python -m venv env
 ```
+
+Activate enviroment:
+
+- Windows:
 
 ```bash
 . env/scripts/activate
 ```
 
+- Mac/Linux:
+
+```bash
+. env/bin/activate
+```
+
+Upgrade pip:
+
 ```bash
 python -m pip install --upgrade pip
 ```
 
+Install requirements:
 ```bash
 pip install -r requirements.txt
 ```
