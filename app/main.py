@@ -1,7 +1,6 @@
-import logging
-
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
+from loguru import logger
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -10,12 +9,17 @@ from app.api.health import router as health_router
 from app.core.config import settings
 from app.middlewares import ProcessTimeHeaderMiddleware
 
+from .logger import setup_logging
+
 # FastAPI
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
 )
+
+# Logger
+setup_logging()
 
 # Middlewares
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
@@ -36,7 +40,7 @@ app.add_middleware(ProcessTimeHeaderMiddleware)
 
 @app.exception_handler(500)
 async def handle_500_errors(request: Request, exc: Exception) -> JSONResponse:
-    logging.error(f"Error: {exc}")
+    logger.error(f"Error: {exc}")
     return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
 
