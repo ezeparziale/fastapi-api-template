@@ -1,5 +1,5 @@
 fastapi[all]==0.97.0
-Authlib==1.2.0
+Authlib==1.2.1
 SQLAlchemy==2.0.16
 psycopg2==2.9.6
 python-jose==3.3.0
