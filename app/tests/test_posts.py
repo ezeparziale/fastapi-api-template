@@ -18,6 +18,58 @@ def test_get_all_posts(authorized_client: TestClient, test_posts: list[Post]):
     assert res.status_code == 200
 
 
+@pytest.mark.parametrize(
+    "fields, status_code",
+    [
+        ("id", 200),
+        ("-id", 200),
+        ("title", 200),
+        ("-title", 200),
+        ("content", 200),
+        ("-content", 200),
+        ("published", 200),
+        ("-published", 200),
+        ("created_at", 200),
+        ("-created_at", 200),
+        ("updated_at", 200),
+        ("-updated_at", 200),
+        ("field_not_exists", 400),
+        ("-field_not_exists", 400),
+        ("id,title", 200),
+        ("-id,title", 200),
+    ],
+)
+def test_get_posts_sort_by_fields(
+    authorized_client: TestClient, fields: str, status_code: int
+):
+    params = {"sort": fields}
+    res = authorized_client.get("/api/v1/posts", params=params)
+    print(res.json())
+    assert res.status_code == status_code
+
+
+def test_get_posts_search(authorized_client: TestClient, test_posts: list[Post]):
+    params = {"search": test_posts[0].title}
+    res = authorized_client.get("/api/v1/posts", params=params)
+    print(res.json())
+    assert res.status_code == 200
+    data = res.json()
+    print(data)
+    assert data[0]["Post"]["title"] == test_posts[0].title
+
+
+def test_get_posts_search_no_posts(
+    authorized_client: TestClient, test_posts: list[Post]
+):
+    params = {"search": "xxxx"}
+    res = authorized_client.get("/api/v1/posts", params=params)
+    print(res.json())
+    assert res.status_code == 200
+    data = res.json()
+    print(data)
+    assert len(data) == 0
+
+
 def test_unauthorized_user_get_all_posts(client: TestClient):
     res = client.get("/api/v1/posts/")
     print(res.json())
