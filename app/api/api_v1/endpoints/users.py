@@ -2,7 +2,8 @@ from math import ceil
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Response, status
-from sqlalchemy import desc, func, select
+from loguru import logger
+from sqlalchemy import String, cast, desc, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.default_responses import default_responses
@@ -37,6 +38,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
     """
     ### Create user
     """
+    # Check if user exists
     stmt_select = select(User).filter_by(email=user.email)
     user_exists = db.execute(stmt_select).scalars().first()
 
@@ -46,12 +48,14 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
             detail="User already exists",
         )
 
+    # Create user
     hashed_password = get_password_hash(user.password)
     user.password = hashed_password
     new_user = User(**user.dict())
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
     return new_user
 
 
@@ -72,7 +76,7 @@ def get_user_me(
     """
     ### Get current user info
     """
-    return current_user
+    return current_user  # type: ignore
 
 
 @router.get(
@@ -99,13 +103,17 @@ def get_user(
     """
     ### Get user by id
     """
+    # Get user
     stmt_select = select(User).where(User.id == id).limit(1)
     user = db.execute(stmt_select).scalars().first()
+
+    # Check if user not found
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
+
     return user
 
 
@@ -118,10 +126,12 @@ def get_user(
             "description": "User info",
             "model": list[UserOut],
         },
-        404: {
-            "description": "User not found",
+        400: {
+            "description": "Bad request",
             "model": MessageDetail,
-            "content": {"application/json": {"example": {"detail": "User not found"}}},
+            "content": {
+                "application/json": {"example": {"detail": "Invalid sort field"}}
+            },
         },
     },
 )
@@ -132,30 +142,43 @@ def get_users(
     db: Session = Depends(get_db),
 ) -> list[UserOut]:
     """
-    ### Get all users info
+    ### Get users list
     """
     # Query
     stmt_select = select(User)
 
     # Search
     if commons.search:
-        stmt_select = stmt_select.where(User.email.contains(commons.search))
+        stmt_select = stmt_select.where(
+            or_(
+                cast(User.id, String).ilike(commons.search),
+                User.email.icontains(commons.search),
+            )
+        )
 
     # Total rows filtered
-    total_row_filtered = db.execute(
-        select(func.count()).select_from(stmt_select.subquery())
-    ).scalar()
+    total_row_filtered = (
+        db.execute(select(func.count()).select_from(stmt_select.subquery()))
+        .scalars()
+        .one()
+    )
 
     # Sort
-    if commons.sort:
-        fields = commons.sort.split(",")
-        for field in fields:
-            if field.startswith("-"):
-                stmt_select = stmt_select.order_by(desc(getattr(User, field[1:])))
-            else:
-                stmt_select = stmt_select.order_by(getattr(User, field))
-    else:
-        stmt_select = stmt_select.order_by(User.id)
+    try:
+        if commons.sort:
+            fields = commons.sort.split(",")
+            for field in fields:
+                if field.startswith("-"):
+                    stmt_select = stmt_select.order_by(desc(getattr(User, field[1:])))
+                else:
+                    stmt_select = stmt_select.order_by(getattr(User, field))
+        else:
+            stmt_select = stmt_select.order_by(User.id)
+    except Exception as e:
+        logger.warning(e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid sort field"
+        ) from e
 
     # Pagination
     stmt_select = stmt_select.limit(commons.limit).offset(commons.offset)

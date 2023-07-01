@@ -66,15 +66,18 @@ def vote_post(
     """
     ### Vote a post
     """
+    # Get post
     stmt_select = select(Post).where(Post.id == vote.post_id)
     post = db.execute(stmt_select).scalars().first()
 
+    # Check if post exists
     if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found",
         )
 
+    # Check if vote exists
     stmt_select_vote = select(Vote).where(
         Vote.post_id == vote.post_id, Vote.user_id == current_user.id
     )
@@ -87,9 +90,12 @@ def vote_post(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Post already voted by user",
             )
+
+        # Add vote in db
         new_vote = Vote(post_id=vote.post_id, user_id=current_user.id)
         db.add(new_vote)
         db.commit()
+
         return {"message": "Successfully added vote"}
     else:
         if not found_vote:
@@ -97,6 +103,7 @@ def vote_post(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Vote does not exist"
             )
 
+        # Delete vote in db
         stmt_delete_vote = (
             delete(Vote)
             .where(Vote.post_id == vote.post_id, Vote.user_id == current_user.id)
@@ -104,6 +111,7 @@ def vote_post(
         )
         db.execute(stmt_delete_vote)
         db.commit()
+
         raise HTTPException(
             status_code=status.HTTP_204_NO_CONTENT,
         )

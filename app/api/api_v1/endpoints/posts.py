@@ -2,6 +2,7 @@ from math import ceil
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, Response, status
+from loguru import logger
 from sqlalchemy import delete, desc, func, select, update
 from sqlalchemy.orm import Session
 
@@ -30,6 +31,13 @@ router = APIRouter()
             "description": "List of posts",
             "model": list[PostOut],
         },
+        400: {
+            "description": "Bad request",
+            "model": MessageDetail,
+            "content": {
+                "application/json": {"example": {"detail": "Invalid sort field"}}
+            },
+        },
     },
 )
 def get_posts(
@@ -39,7 +47,7 @@ def get_posts(
     db: Session = Depends(get_db),
 ) -> list[PostOut]:
     """
-    ### Get post list
+    ### Get posts list
     """
     # Query
     stmt_select = (
@@ -53,20 +61,28 @@ def get_posts(
         stmt_select = stmt_select.where(Post.title.contains(commons.search))
 
     # Total rows filtered
-    total_row_filtered = db.execute(
-        select(func.count()).select_from(stmt_select.subquery())
-    ).scalar()
+    total_row_filtered = (
+        db.execute(select(func.count()).select_from(stmt_select.subquery()))
+        .scalars()
+        .one()
+    )
 
     # Sort
-    if commons.sort:
-        fields = commons.sort.split(",")
-        for field in fields:
-            if field.startswith("-"):
-                stmt_select = stmt_select.order_by(desc(getattr(Post, field[1:])))
-            else:
-                stmt_select = stmt_select.order_by(getattr(Post, field))
-    else:
-        stmt_select = stmt_select.order_by(Post.id)
+    try:
+        if commons.sort:
+            fields = commons.sort.split(",")
+            for field in fields:
+                if field.startswith("-"):
+                    stmt_select = stmt_select.order_by(desc(getattr(Post, field[1:])))
+                else:
+                    stmt_select = stmt_select.order_by(getattr(Post, field))
+        else:
+            stmt_select = stmt_select.order_by(Post.id)
+    except Exception as e:
+        logger.warning(e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid sort field"
+        ) from e
 
     # Pagination
     stmt_select = stmt_select.limit(commons.limit).offset(commons.offset)
@@ -104,10 +120,12 @@ def create_posts(
     """
     ### Create post
     """
+    # Create post
     new_post = Post(owner_id=current_user.id, **post.dict())
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
+
     return new_post
 
 
@@ -135,6 +153,7 @@ def get_post(
     """
     ### Get post by id
     """
+    # Get post
     stmt_select = (
         select(Post, func.count(Vote.post_id).label("votes"))
         .join(Vote, Vote.post_id == Post.id, isouter=True)
@@ -144,10 +163,12 @@ def get_post(
     )
     post = db.execute(stmt_select).first()
 
+    # Check if post exists
     if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
         )
+
     return post  # type: ignore[return-value]
 
 
@@ -183,28 +204,33 @@ def delete_post(
     """
     ### Delete post
     """
+    # get post
     stmt_select = select(Post).where(Post.id == id).limit(1)
     post_query = db.execute(stmt_select)
 
     post = post_query.scalars().first()
 
+    # Check if post exists
     if post is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found",
         )
 
+    # Check if user is owner of the post
     if post.owner_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to perform requested action",
         )
 
+    # Delete post in db
     stmt_delete = (
         delete(Post).where(Post.id == id).execution_options(synchronize_session=False)
     )
     db.execute(stmt_delete)
     db.commit()
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)  # type: ignore[return-value] # noqa: E501
 
 
@@ -242,21 +268,25 @@ def update_post(
     """
     ### Update post
     """
+    # Get post
     stmt_select = select(Post).where(Post.id == id).limit(1)
     post_to_update = db.execute(stmt_select).scalars().first()
 
+    # Check if post exists
     if post_to_update is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found",
         )
 
+    # Check if user is owner of the post
     if post_to_update.owner_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to perform requested action",
         )
 
+    # Update post in db
     stmt_update = (
         update(Post)
         .where(Post.id == id)
@@ -266,4 +296,5 @@ def update_post(
     )
     result = db.scalars(stmt_update)
     db.commit()
+
     return result.first()  # type: ignore[return-value]
