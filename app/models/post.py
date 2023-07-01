@@ -1,9 +1,13 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import Boolean, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
 from app.models.mixin import TimestampMixin
-from app.models.user import User
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 class Post(Base, TimestampMixin):
@@ -19,7 +23,7 @@ class Post(Base, TimestampMixin):
     owner_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    owner: Mapped[list["User"]] = relationship("User")  # noqa: F821
+    owner: Mapped["User"] = relationship(back_populates="posts")  # noqa: F821
 
     def __repr__(self) -> str:
         return f"Post(id={self.id}, title={self.title}, published={self.published}, owner_id={self.owner_id}, created_at={self.created_at}, owner={self.owner})"  # noqa: E501
