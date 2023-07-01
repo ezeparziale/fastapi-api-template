@@ -18,24 +18,28 @@ class CommonQueryParams:
             str | None,
             Query(
                 description="Sort",
-                examples={
-                    "empty": {
+                examples=[
+                    {
+                        "summary": "empty",
                         "description": "Sort by default",
                         "value": "",
                     },
-                    "asc": {
+                    {
+                        "summary": "asc",
                         "description": "Sort by asc",
                         "value": "id",
                     },
-                    "desc": {
+                    {
+                        "summary": "desc",
                         "description": "Sort by asc",
                         "value": "-id",
                     },
-                    "mutiple fields": {
+                    {
+                        "summary": "multiple fields",
                         "description": "Sort by multiple fields",
                         "value": "field_1,-field_2",
                     },
-                },
+                ],
             ),
         ] = None,
     ):
