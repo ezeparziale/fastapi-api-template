@@ -2,9 +2,9 @@ import pytest
 from fastapi.testclient import TestClient
 from jose import jwt
 
-from app.schemas import UserOut, Token
 from app.core.config import settings
 from app.models import User
+from app.schemas import Token, UserOut
 
 
 def test_get_all_users(
