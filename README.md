@@ -31,6 +31,7 @@ python -m pip install --upgrade pip
 ```
 
 Install requirements:
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -94,3 +95,51 @@ uvicorn app.main:app --reload --port 8000 --ssl-keyfile key.pem --ssl-certfile c
 - CORS
 - Complete swagger Api info
 - Postgres
+
+## :rotating_light: Lint
+
+Run linter and formatter
+
+```bash
+scripts/lint.sh
+```
+
+```bash
+scripts/format.sh
+```
+
+## :technologist: Coverage
+
+Run coverage
+
+```bash
+coverage run -m pytest
+```
+
+```bash
+coverage report --show-missing
+```
+
+```bash
+coverage html
+```
+
+Or run all in one with:
+
+```bash
+scripts/coverage.sh
+```
+
+## :test_tube: Test
+
+Run pytest with coverage
+
+```bash
+coverage run -m pytest
+```
+
+or
+
+```bash
+scripts/test.sh
+```
