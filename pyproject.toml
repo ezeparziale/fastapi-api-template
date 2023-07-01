@@ -3,16 +3,18 @@ profile = "black"
 
 [tool.ruff]
 select = [
-    "C",  # flake8-comprehensions
     "E",  # pycodestyle errors
-    "F",  # pyflakes
     "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
     "B",  # flake8-bugbear
 ]
 ignore = [
     "E203",  # whitespace-before-punctuation
     "E501",  # line too long, handled by black
     "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
 ]
 unfixable = [
     "B"  # flake8-bugbear
@@ -23,6 +25,9 @@ unfixable = [
     "E402",  # module-import-not-at-top-of-file
     "F401"  # Module imported but unused
 ]
+
+[tool.ruff.isort]
+known-third-party = ["fastapi", "pydantic", "starlette"]
 
 [tool.mypy]
 # strict = true
