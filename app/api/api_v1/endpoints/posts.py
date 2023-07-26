@@ -121,7 +121,7 @@ def create_posts(
     ### Create post
     """
     # Create post
-    new_post = Post(owner_id=current_user.id, **post.dict())
+    new_post = Post(owner_id=current_user.id, **post.model_dump())
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
@@ -290,7 +290,7 @@ def update_post(
     stmt_update = (
         update(Post)
         .where(Post.id == id)
-        .values(post.dict())
+        .values(post.model_dump())
         .execution_options(synchronize_session=False)
         .returning(Post)
     )
