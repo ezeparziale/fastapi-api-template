@@ -33,7 +33,7 @@ python -m pip install --upgrade pip
 Install requirements:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
 ## :wrench: Config
