@@ -3,12 +3,10 @@ name: Testing
 on: [push, pull_request]
 
 jobs:
-
   testing:
-
     environment:
       name: test
-      
+
     env:
       ACCESS_TOKEN_EXPIRE_MINUTES: ${{secrets.ACCESS_TOKEN_EXPIRE_MINUTES}}
       ALGORITHM: ${{secrets.ALGORITHM}}
@@ -24,7 +22,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:14.7
+        image: postgres:15.3
         env:
           POSTGRES_USER: ${{secrets.POSTGRES_USER}}
           POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASSWORD}}

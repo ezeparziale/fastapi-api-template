@@ -17,7 +17,7 @@ services:
       - fastapi_demo_net
 
   postgres:
-    image: postgres:15.2
+    image: postgres:15.3
     hostname: postgres_db
     container_name: postgres_db
     restart: always
