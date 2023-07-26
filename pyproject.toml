@@ -34,3 +34,9 @@ known-third-party = ["fastapi", "pydantic", "starlette"]
 warn_unused_ignores = true
 ignore_missing_imports = true
 plugins = "pydantic.mypy"
+
+[tool.coverage.report]
+exclude_lines = [
+    "def __repr__",
+    "if TYPE_CHECKING:",
+]
