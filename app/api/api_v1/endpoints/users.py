@@ -76,7 +76,7 @@ def get_user_me(
     """
     ### Get current user info
     """
-    return current_user  # type: ignore
+    return current_user
 
 
 @router.get(
