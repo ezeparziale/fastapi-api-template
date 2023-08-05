@@ -4,6 +4,6 @@ set -e
 set -x
 
 coverage run -m pytest
-coverage combine
+# coverage combine
 coverage report --show-missing
 coverage html
