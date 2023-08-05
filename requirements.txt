@@ -1,7 +1,7 @@
 fastapi[all]==0.101.0
 Authlib==1.2.1
 SQLAlchemy==2.0.19
-psycopg2==2.9.6
+psycopg2==2.9.7
 python-jose==3.3.0
 passlib[bcrypt]==1.7.4
 pytest==7.4.0
