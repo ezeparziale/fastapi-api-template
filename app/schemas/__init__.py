@@ -4,7 +4,7 @@ from .post import (  # noqa: F401
     NewPostOut,
     PostBase,
     PostCreateIn,
-    PostOut,  # noqa: F401
+    PostOut,
     PostUpdateIn,
     PostUpdateOut,
 )

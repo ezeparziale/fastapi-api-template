@@ -54,7 +54,7 @@ async def get_current_user(
             raise credentials_exception
         token_data = TokenData(id=id)
     except JWTError:
-        raise credentials_exception
+        raise credentials_exception from None
 
     stmt_select = select(User).where(User.id == token_data.id)
     user = db.execute(stmt_select).scalars().first()
