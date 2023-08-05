@@ -36,6 +36,8 @@ ignore_missing_imports = true
 plugins = "pydantic.mypy"
 
 [tool.coverage.report]
+show_missing = true
+fail_under = 95
 exclude_lines = [
     "def __repr__",
     "if TYPE_CHECKING:",
