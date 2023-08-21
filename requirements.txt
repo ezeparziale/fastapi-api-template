@@ -4,6 +4,6 @@ SQLAlchemy==2.0.19
 psycopg2==2.9.7
 python-jose==3.3.0
 passlib[bcrypt]==1.7.4
-alembic==1.11.2
+alembic==1.11.3
 psutil==5.9.5
 loguru==0.7.0
