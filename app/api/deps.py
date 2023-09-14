@@ -18,7 +18,7 @@ class CommonQueryParams:
             str | None,
             Query(
                 description="Sort",
-                examples=[
+                openapi_examples=[
                     {
                         "summary": "empty",
                         "description": "Sort by default",
