@@ -2,7 +2,7 @@
 -r requirements.txt
 
 isort==5.12.0
-black==23.7.0
+black==23.9.1
 ruff==0.0.288
 pytest==7.4.2
 mypy==1.5.1
