@@ -9,6 +9,7 @@ select = [
     "I",  # isort
     "C",  # flake8-comprehensions
     "B",  # flake8-bugbear
+    "UP",  # pyupgrade
 ]
 ignore = [
     "E203",  # whitespace-before-punctuation
