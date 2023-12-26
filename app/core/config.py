@@ -1,7 +1,7 @@
 from typing import Any, List, Optional
 
 from pydantic import AnyHttpUrl, PostgresDsn, field_validator
-from pydantic_core.core_schema import FieldValidationInfo
+from pydantic_core.core_schema import ValidationInfo
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = None
 
     @field_validator("SQLALCHEMY_DATABASE_URI", mode="before")
-    def assemble_db_connection(cls, v: str | None, info: FieldValidationInfo) -> Any:
+    def assemble_db_connection(cls, v: str | None, info: ValidationInfo) -> Any:
         if isinstance(v, str):
             return v
         return PostgresDsn.build(
