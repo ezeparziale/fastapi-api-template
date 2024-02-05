@@ -6,4 +6,4 @@ black==24.1.1
 ruff==0.1.14
 pytest==8.0.0
 mypy==1.8.0
-coverage[toml]==7.4.0
+coverage[toml]==7.4.1
