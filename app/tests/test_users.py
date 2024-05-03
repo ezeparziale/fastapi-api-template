@@ -1,6 +1,6 @@
 import pytest
+from authlib.jose import jwt
 from fastapi.testclient import TestClient
-from jose import jwt
 
 from app.core.config import settings
 from app.models import User
@@ -56,9 +56,7 @@ def test_login(client: TestClient, test_user: User):
     )
     print(res.json())
     login_res = Token(**res.json())
-    payload = jwt.decode(
-        login_res.access_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-    )
+    payload = jwt.decode(login_res.access_token, settings.SECRET_KEY)
     id = payload.get("id")
     assert id == test_user["id"]
     assert login_res.token_type == "bearer"

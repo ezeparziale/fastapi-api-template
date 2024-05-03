@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from authlib.integrations.starlette_client import OAuth
+from authlib.jose import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt
-from jose.exceptions import JWTError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -33,10 +32,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/login")
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    encoded_jwt = jwt.encode(
+        payload=to_encode, key=SECRET_KEY, header={"alg": ALGORITHM}
+    )
+    return encoded_jwt.decode("utf-8")
 
 
 async def get_current_user(
@@ -47,14 +48,12 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        id: str = str(payload.get("id"))
-        if id is None:
-            raise credentials_exception
-        token_data = TokenData(id=id)
-    except JWTError:
-        raise credentials_exception from None
+
+    payload = jwt.decode(token, SECRET_KEY)
+    id: str = str(payload.get("id"))
+    if id is None:
+        raise credentials_exception
+    token_data = TokenData(id=id)
 
     stmt_select = select(User).where(User.id == token_data.id)
     user = db.execute(stmt_select).scalars().first()
