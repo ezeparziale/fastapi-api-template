@@ -15,7 +15,11 @@ def setup_logging():
             "formatters": {
                 "access": {
                     "()": "uvicorn.logging.AccessFormatter",
-                    "fmt": '%(asctime)s.%(msecs)03d +00:00 | %(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
+                    "fmt": (
+                        "%(asctime)s.%(msecs)03d +00:00 | "
+                        "%(levelprefix)s %(client_addr)s - "
+                        '"%(request_line)s" %(status_code)s'
+                    ),
                     "datefmt": "%Y-%m-%d %H:%M:%S",
                     "use_colors": True,
                 },
@@ -44,7 +48,10 @@ def setup_logging():
     logger.add(
         sys.stdout,
         colorize=True,
-        format="{time:YYYY-MM-DD HH:mm:ss.SSS!UTC} +00:00 | <level>{level}</level>:  <level>{message}</level>",
+        format=(
+            "{time:YYYY-MM-DD HH:mm:ss.SSS!UTC} +00:00 | "
+            "<level>{level}</level>: <level>{message}</level>"
+        ),
         level=unicorn_logger.level,
     )
     # logger.level("INFO", color="<green>")
