@@ -1,0 +1,13 @@
+# See https://pre-commit.com for more information
+default_language_version:
+  python: python3.12
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.4.3
+    hooks:
+      # Run the linter.
+      - id: ruff
+        args: ["--select", "E,W,F,I,C,B,UP", "--ignore", "E203,B008,C901"]
+      # Run the formatter.
+      - id: ruff-format
