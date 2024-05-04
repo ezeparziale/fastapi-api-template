@@ -1,3 +1,7 @@
+[project]
+name = "fastapi-api-template"
+requires-python = ">= 3.12"
+
 [tool.isort]
 profile = "black"
 
