@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import psutil
 from fastapi import APIRouter, Depends, status
@@ -28,7 +28,7 @@ def health_api(db: Session = Depends(get_db)) -> APIStatus:
     process = psutil.Process()
     start_time = process.create_time()
 
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = datetime.now(UTC).isoformat()
     uptime = str(datetime.now().timestamp() - start_time)
 
     resp = APIStatus(
