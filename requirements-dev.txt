@@ -4,6 +4,6 @@
 isort==5.13.2
 black==24.4.2
 ruff==0.4.3
-pytest==8.1.1
+pytest==8.2.0
 mypy==1.10.0
 coverage[toml]==7.4.4
