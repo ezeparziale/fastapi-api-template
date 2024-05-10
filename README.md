@@ -36,6 +36,12 @@ Install requirements:
 pip install -r requirements-dev.txt
 ```
 
+Install pre-commit:
+
+```bash
+pre-commit install
+```
+
 ## :wrench: Config
 
 Create `.env` file. Check the example `.env.example`
