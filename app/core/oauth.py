@@ -3,6 +3,7 @@ from typing import Annotated
 
 from authlib.integrations.starlette_client import OAuth
 from authlib.jose import jwt
+from authlib.jose.errors import BadSignatureError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
@@ -48,12 +49,14 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-
-    payload = jwt.decode(token, SECRET_KEY)
-    id: str = str(payload.get("id"))
-    if id is None:
-        raise credentials_exception
-    token_data = TokenData(id=id)
+    try:
+        payload = jwt.decode(token, SECRET_KEY)
+        id: int | None = payload.get("id", None)
+        if id is None:
+            raise credentials_exception
+        token_data = TokenData(id=id)
+    except BadSignatureError as exc:
+        raise credentials_exception from exc
 
     stmt_select = select(User).where(User.id == token_data.id)
     user = db.execute(stmt_select).scalars().first()
