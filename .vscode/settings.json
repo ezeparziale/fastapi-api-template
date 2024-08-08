@@ -5,15 +5,19 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true,
     "black-formatter.importStrategy": "fromEnvironment",
+    "isort.check": true,
     "isort.importStrategy": "fromEnvironment",
     "isort.args": [
         "--profile",
         "black"
     ],
+    "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.codeActionsOnSave": {
         "source.organizeImports": "explicit"
-    }
+    },
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
 }
