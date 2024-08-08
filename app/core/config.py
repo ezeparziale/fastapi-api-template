@@ -1,8 +1,16 @@
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import AnyHttpUrl, PostgresDsn, field_validator
-from pydantic_core.core_schema import ValidationInfo
+from pydantic import AnyHttpUrl, BeforeValidator, PostgresDsn, computed_field
+from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def parse_cors(v: Any) -> list[str] | str:
+    if isinstance(v, str) and not v.startswith("["):
+        return [i.strip() for i in v.split(",")]
+    elif isinstance(v, list | str):
+        return v
+    raise ValueError(v)
 
 
 class Settings(BaseSettings):
@@ -10,7 +18,9 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "FastAPI Google Auth Login"
-    BACKEND_CORS_ORIGINS: list[AnyHttpUrl] = []
+    BACKEND_CORS_ORIGINS: Annotated[
+        list[AnyHttpUrl] | str, BeforeValidator(parse_cors)
+    ] = []
 
     # Jwt
     SECRET_KEY: str
@@ -27,24 +37,21 @@ class Settings(BaseSettings):
 
     # Database
     POSTGRES_HOSTNAME: str
-    POSTGRES_PORT: str
+    POSTGRES_PORT: int = 5432
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
 
-    SQLALCHEMY_DATABASE_URI: PostgresDsn | None = None
-
-    @field_validator("SQLALCHEMY_DATABASE_URI", mode="before")
-    def assemble_db_connection(cls, v: str | None, info: ValidationInfo) -> Any:
-        if isinstance(v, str):
-            return v
-        return PostgresDsn.build(
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
+        return MultiHostUrl.build(
             scheme="postgresql",
-            username=info.data.get("POSTGRES_USER"),
-            password=info.data.get("POSTGRES_PASSWORD"),
-            host=info.data.get("POSTGRES_HOSTNAME"),
-            port=int(info.data.get("POSTGRES_PORT")),  # type: ignore  # noqa
-            path=info.data.get("POSTGRES_DB", ""),
+            username=self.POSTGRES_USER,
+            password=self.POSTGRES_PASSWORD,
+            host=self.POSTGRES_HOSTNAME,
+            port=self.POSTGRES_PORT,
+            path=self.POSTGRES_DB,
         )
 
     model_config = SettingsConfigDict(env_file=".env")
