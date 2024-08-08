@@ -7,4 +7,3 @@ venv/
 **/*.env.db
 **/cert.pem
 **/key.pem
-**/.vscode
