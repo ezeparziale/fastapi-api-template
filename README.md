@@ -4,6 +4,15 @@ Template API with FastApi
 
 ## :floppy_disk: Installation
 
+> [!IMPORTANT]
+> Min Python version: 3.12
+
+Clone this repo:
+
+```bash
+git clone https://github.com/ezeparziale/fastapi-api-template
+```
+
 Create virtual enviroment:
 
 ```bash
