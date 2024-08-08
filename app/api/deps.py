@@ -12,7 +12,9 @@ class CommonQueryParams:
     def __init__(
         self,
         offset: Annotated[int, Query(description="Offset for pagination", ge=0)] = 0,
-        limit: Annotated[int, Query(description="Limit for pagination", gt=0)] = 10,
+        limit: Annotated[
+            int, Query(description="Limit for pagination", gt=0, le=1000)
+        ] = 10,
         search: Annotated[str | None, Query(description="Search")] = None,
         sort: Annotated[
             str | None,
