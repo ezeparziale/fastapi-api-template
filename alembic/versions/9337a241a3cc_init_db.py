@@ -1,20 +1,22 @@
 """init_db
 
-Revision ID: bb623bafa6cf
+Revision ID: 9337a241a3cc
 Revises:
-Create Date: 2023-06-01 18:25:24.934865
+Create Date: 2024-08-07 21:55:05.160101
 
 """
+
+from collections.abc import Sequence
 
 import sqlalchemy as sa
 
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "bb623bafa6cf"
-down_revision = None
-branch_labels = None
-depends_on = None
+revision: str = "9337a241a3cc"
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
