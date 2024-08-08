@@ -11,7 +11,7 @@ from app.models import Base
 config = context.config
 config.set_main_option(
     "sqlalchemy.url",
-    settings.SQLALCHEMY_DATABASE_URI.unicode_string(),  # type: ignore
+    settings.SQLALCHEMY_DATABASE_URI.unicode_string(),
 )
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
