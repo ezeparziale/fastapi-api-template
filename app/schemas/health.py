@@ -3,7 +3,11 @@ from pydantic import BaseModel, Field
 
 class APIStatus(BaseModel):
     status: str = Field(
-        description="Represents the health status of the API", examples=["OK"]
+        description="Represents the health status of the API", examples=["Healthy"]
+    )
+    db_status: str = Field(
+        description="Represents the health status of the data base",
+        examples=["Healthy", "Unhealthy"],
     )
     timestamp: str = Field(
         description="Represents the timestamp when the /health response was generated",
