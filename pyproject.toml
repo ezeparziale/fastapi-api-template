@@ -1,5 +1,7 @@
 [project]
 name = "fastapi-api-template"
+description = "Fastapi api template"
+readme = "README.md"
 requires-python = ">= 3.12"
 
 [tool.isort]
