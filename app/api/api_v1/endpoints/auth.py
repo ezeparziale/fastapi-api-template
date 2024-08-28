@@ -35,7 +35,7 @@ async def auth_via_google(request: Request, db: Session = Depends(get_db)) -> An
             status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials"
         )
 
-    access_token = create_access_token(data={"user_id": user.id})
+    access_token = create_access_token(data={"sub": user.id})
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -59,5 +59,5 @@ async def login(
             status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials"
         )
 
-    access_token = create_access_token(data={"id": user.id})
+    access_token = create_access_token(data={"sub": user.id})
     return {"access_token": access_token, "token_type": "bearer"}

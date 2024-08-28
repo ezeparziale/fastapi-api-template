@@ -51,10 +51,10 @@ async def get_current_user(
     )
     try:
         payload = jwt.decode(token, SECRET_KEY)
-        id: int | None = payload.get("id", None)
-        if id is None:
+        sub: int | None = payload.get("sub", None)
+        if sub is None:
             raise credentials_exception
-        token_data = TokenData(id=id)
+        token_data = TokenData(id=sub)
     except BadSignatureError as exc:
         raise credentials_exception from exc
 

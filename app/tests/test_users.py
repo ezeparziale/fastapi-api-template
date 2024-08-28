@@ -57,7 +57,7 @@ def test_login(client: TestClient, test_user: User):
     print(res.json())
     login_res = Token(**res.json())
     payload = jwt.decode(login_res.access_token, settings.SECRET_KEY)
-    id = payload.get("id")
+    id = payload.get("sub")
     assert id == test_user["id"]
     assert login_res.token_type == "bearer"
     assert res.status_code == 200

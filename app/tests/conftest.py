@@ -64,7 +64,7 @@ def test_user2(client: TestClient) -> User:
 
 @pytest.fixture
 def token(test_user: User) -> str:
-    return create_access_token({"id": test_user["id"]})
+    return create_access_token({"sub": test_user["id"]})
 
 
 @pytest.fixture
