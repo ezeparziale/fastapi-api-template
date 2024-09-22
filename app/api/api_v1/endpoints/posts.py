@@ -7,7 +7,7 @@ from sqlalchemy import delete, desc, func, select, update
 from sqlalchemy.orm import Session
 
 from app.api.default_responses import default_responses
-from app.api.deps import CommonsDep, CurrentUser
+from app.api.deps import CurrentUser, FilterParams
 from app.db.database import get_db
 from app.models import Post, Vote
 from app.schemas import (
@@ -24,6 +24,23 @@ router = APIRouter()
 
 @router.get(
     "/",
+    description="""
+    Get posts list
+
+    This endpoint returns a list of posts along with additional metadata in the response headers.
+
+    The following headers are included:
+
+    - **Total-Count**: Total number of posts in the database.
+    - **Total-Count-Filtered**: Total number of posts after applying any filters (e.g., search).
+    - **Pagination-Pages**: Total number of pages based on the limit specified in the query parameters.
+
+    You can also sort the results by one or multiple fields using the `sort_by` query parameter.
+    To sort in descending order, prepend the field with a '-' (e.g., `-id`).
+    Sorting by multiple fields is supported by separating them with commas (e.g., `title,-id`).
+
+    The response includes both the posts data and these headers for pagination and filtering details.
+    """,  # noqa: E501
     status_code=status.HTTP_200_OK,
     responses={
         **default_responses,
@@ -42,7 +59,7 @@ router = APIRouter()
 )
 def get_posts(
     response: Response,
-    commons: CommonsDep,
+    filter_query: FilterParams,
     current_user: CurrentUser,
     db: Session = Depends(get_db),
 ) -> list[PostOut]:
@@ -57,8 +74,8 @@ def get_posts(
     )
 
     # Search
-    if commons.search:
-        stmt_select = stmt_select.where(Post.title.contains(commons.search))
+    if filter_query.search:
+        stmt_select = stmt_select.where(Post.title.icontains(filter_query.search))
 
     # Total rows filtered
     total_row_filtered = (
@@ -69,8 +86,8 @@ def get_posts(
 
     # Sort
     try:
-        if commons.sort:
-            fields = commons.sort.split(",")
+        if filter_query.sort_by:
+            fields = filter_query.sort_by.split(",")
             for field in fields:
                 if field.startswith("-"):
                     stmt_select = stmt_select.order_by(desc(getattr(Post, field[1:])))
@@ -85,7 +102,7 @@ def get_posts(
         ) from e
 
     # Pagination
-    stmt_select = stmt_select.limit(commons.limit).offset(commons.offset)
+    stmt_select = stmt_select.limit(filter_query.limit).offset(filter_query.offset)
 
     # Get data
     posts = db.execute(stmt_select).all()
@@ -96,7 +113,7 @@ def get_posts(
     # Extra headers
     response.headers["Total-Count"] = str(total_rows)
     response.headers["Total-Count-Filtered"] = str(total_row_filtered)
-    response.headers["Pagination-Pages"] = str(ceil(total_rows / commons.limit))
+    response.headers["Pagination-Pages"] = str(ceil(total_rows / filter_query.limit))
 
     return posts  # type: ignore[return-value]
 
