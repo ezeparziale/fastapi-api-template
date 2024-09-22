@@ -13,13 +13,13 @@ Clone this repo:
 git clone https://github.com/ezeparziale/fastapi-api-template
 ```
 
-Create virtual enviroment:
+Create virtual environment:
 
 ```bash
 python -m venv env
 ```
 
-Activate enviroment:
+Activate environment:
 
 - Windows:
 
