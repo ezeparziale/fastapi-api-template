@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -9,7 +11,7 @@ class APIStatus(BaseModel):
         description="Represents the health status of the data base",
         examples=["Healthy", "Unhealthy"],
     )
-    timestamp: str = Field(
+    timestamp: datetime = Field(
         description="Represents the timestamp when the /health response was generated",
         examples=["2023-05-12T12:34:56.789Z"],
     )
