@@ -28,7 +28,7 @@ oauth.register(
     client_kwargs={"scope": settings.GOOGLE_SCOPES},
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
 
 def create_access_token(data: dict) -> str:
