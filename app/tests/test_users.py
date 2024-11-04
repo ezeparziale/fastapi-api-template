@@ -51,7 +51,7 @@ def test_create_user(
 
 def test_login(client: TestClient, test_user: User):
     res = client.post(
-        "/api/v1/login",
+        "/api/v1/auth/login",
         data={"username": test_user["email"], "password": test_user["password"]},
     )
     print(res.json())
@@ -74,9 +74,15 @@ def test_login(client: TestClient, test_user: User):
     ],
 )
 def test_incorrent_login(
-    client: TestClient, email: str, password: str, status_code: int
+    client: TestClient, email: str | None, password: str | None, status_code: int
 ):
-    res = client.post("/api/v1/login", data={"username": email, "password": password})
+    data = {}
+    if email is not None:
+        data["username"] = email
+    if password is not None:
+        data["password"] = password
+
+    res = client.post("/api/v1/auth/login", data=data)
     print(res.json())
     assert res.status_code == status_code
 
