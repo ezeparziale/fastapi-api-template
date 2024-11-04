@@ -42,7 +42,7 @@ def test_get_all_posts(authorized_client: TestClient, test_posts: list[Post]):
 def test_get_posts_sort_by_fields(
     authorized_client: TestClient, fields: str, status_code: int
 ):
-    params = {"sort": fields}
+    params = {"sort_by": fields}
     res = authorized_client.get("/api/v1/posts", params=params)
     print(res.json())
     assert res.status_code == status_code
