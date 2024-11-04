@@ -109,7 +109,7 @@ def test_get_me(authorized_client: TestClient, test_user: User):
 def test_get_users_sort_by_fields(
     authorized_client: TestClient, fields: str, status_code: int
 ):
-    params = {"sort": fields}
+    params = {"sort_by": fields}
     res = authorized_client.get("/api/v1/users", params=params)
     print(res.json())
     assert res.status_code == status_code
