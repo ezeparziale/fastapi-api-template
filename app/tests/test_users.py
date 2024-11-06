@@ -15,8 +15,9 @@ def test_get_all_users(
     def validate(user):
         return UserOut(**user)
 
-    map(validate, res.json())
-    print(res.json())
+    data = res.json()
+    [validate(item) for item in data]
+    print(data)
 
     assert res.status_code == 200
 
@@ -149,5 +150,7 @@ def test_get_user(
     def validate(user):
         return UserOut(**user)
 
-    map(validate, res.json())
-    print(res.json())
+    if res.status_code == 200:
+        data = res.json()
+        validate(data)
+        print(data)

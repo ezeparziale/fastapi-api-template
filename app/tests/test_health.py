@@ -9,7 +9,8 @@ def test_api_health(client: TestClient):
     def validate(data):
         return APIStatus(**data)
 
-    map(validate, res.json())
-    print(res.json())
+    data = res.json()
+    validate(data)
+    print(data)
 
     assert res.status_code == 200

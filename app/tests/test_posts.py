@@ -11,8 +11,9 @@ def test_get_all_posts(authorized_client: TestClient, test_posts: list[Post]):
     def validate(post):
         return PostOut(**post)
 
-    map(validate, res.json())
-    print(res.json())
+    data = res.json()
+    [validate(item) for item in data]
+    print(data)
 
     assert len(res.json()) == len(test_posts)
     assert res.status_code == 200
