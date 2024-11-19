@@ -18,6 +18,18 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "FastAPI Google Auth Login"
+    SUMMARY: str = "A flexible FastAPI template for building robust and scalable APIs."
+    DESCRIPTION: str = (
+        "**🚀 A versatile FastAPI template** designed to kickstart your API development.\n\n"  # noqa: E501
+        "### ✨ Key Features\n"
+        "- 🔒 **Authentication**: Secure user login and token management.\n"
+        "- 👤 **User Management**: Create, update, and manage user profiles.\n"
+        "- 📦 **CRUD Operations**: Simplify resource management with built-in CRUD functionality.\n"  # noqa: E501
+        "- ⚙️ **Customizable Endpoints**: Adapt the template to fit your project needs.\n\n"  # noqa: E501
+        "This template is **ideal for building scalable and maintainable APIs** "
+        "whether you're working on a blog, e-commerce platform, or any other application. 🛠️"  # noqa: E501
+    )
+
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyHttpUrl] | str, BeforeValidator(parse_cors)
     ] = []

@@ -15,6 +15,8 @@ from .logger import setup_logging
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
+    summary=settings.SUMMARY,
+    description=settings.DESCRIPTION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
 )
 
