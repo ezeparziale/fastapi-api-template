@@ -1,6 +1,9 @@
+from unittest.mock import MagicMock
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import settings
@@ -90,3 +93,26 @@ def test_posts(test_user: User, test_user2: User, session: Session) -> list[Post
     session.commit()
     post = session.query(Post).all()
     return post
+
+
+@pytest.fixture
+def mock_db_error():
+    mock_session = MagicMock()
+    mock_session.execute.side_effect = SQLAlchemyError("Simulated database error")
+    return mock_session
+
+
+@pytest.fixture
+def client_with_db_error(mock_db_error):
+    def override_get_db():
+        try:
+            yield mock_db_error
+        finally:
+            mock_db_error.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_db)
