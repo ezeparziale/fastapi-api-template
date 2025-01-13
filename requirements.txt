@@ -4,5 +4,5 @@ SQLAlchemy==2.0.36
 psycopg2==2.9.10
 bcrypt==4.2.0
 alembic==1.14.0
-psutil==6.1.0
+psutil==6.1.1
 loguru==0.7.2
