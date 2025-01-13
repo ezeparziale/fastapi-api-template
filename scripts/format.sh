@@ -1,6 +1,6 @@
 #!/bin/sh -e
 set -x
 
-ruff format app alembic
-black app alembic
-isort app alembic --profile=black
+ruff format app
+black app
+isort app --profile=black
