@@ -5,7 +5,7 @@ Template API with FastApi
 ## :floppy_disk: Installation
 
 > [!IMPORTANT]
-> Min Python version: 3.12
+> Min Python version: 3.13
 
 Clone this repo:
 
