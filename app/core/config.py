@@ -66,6 +66,9 @@ class Settings(BaseSettings):
             path=self.POSTGRES_DB,
         )
 
+    # Encryption key for db fields
+    ENCRYPTION_KEY: str
+
     model_config = SettingsConfigDict(env_file=".env")
 
 

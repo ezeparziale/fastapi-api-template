@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -23,3 +23,44 @@ class UserOut(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr = Field(title="Email of the user", examples=["user@example.com"])
     password: str = Field(title="Pasword of the user", examples=["secret_password"])
+
+
+class UserCreditCardIn(BaseModel):
+    card_number: str = Field(
+        title="Credit card number",
+        description="The credit card number of the user",
+        examples=["1234 5678 9012 3456"],
+    )
+    expiration_date: date = Field(
+        title="Expiration date",
+        description="The expiration date of the credit card",
+        examples=["2023-05-04"],
+    )
+    cvv: str = Field(
+        title="CVV",
+        description="The CVV of the credit card",
+        examples=["123"],
+    )
+
+
+class UserCreditCardOut(BaseModel):
+    card_number: str = Field(
+        title="Credit card number",
+        description=(
+            "The credit card number of the user, only showing the last four digits"
+        ),
+        examples=["**** **** **** 3456"],
+    )
+    expiration_date: date = Field(
+        title="Expiration date",
+        description="The expiration date of the credit card",
+        examples=["2023-05-04"],
+    )
+
+    @staticmethod
+    def mask_card_number(card_number: str) -> str:
+        return "**** **** **** " + card_number[-4:]
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.card_number = self.mask_card_number(self.card_number)

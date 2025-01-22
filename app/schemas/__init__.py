@@ -9,5 +9,5 @@ from .post import (  # noqa: F401
     PostUpdateOut,
 )
 from .token import Token, TokenData  # noqa: F401
-from .user import UserCreate, UserOut  # noqa: F401
+from .user import UserCreate, UserCreditCardIn, UserCreditCardOut, UserOut  # noqa: F401
 from .vote import Vote  # noqa: F401
