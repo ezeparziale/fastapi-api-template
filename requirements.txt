@@ -3,6 +3,6 @@ Authlib==1.5.2
 SQLAlchemy==2.0.41
 psycopg2==2.9.10
 bcrypt==4.3.0
-alembic==1.15.2
+alembic==1.16.1
 psutil==6.1.1
 loguru==0.7.3
