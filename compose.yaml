@@ -6,7 +6,7 @@ services:
     build:
       dockerfile: Dockerfile.dev
     restart: always
-    ports: 
+    ports:
       - 8000:8000
     env_file:
       - ./.env
@@ -39,12 +39,15 @@ services:
       retries: 5
 
   adminer:
-    image: adminer:4.8.1
+    image: adminer:5.2.1
     hostname: adminer
     container_name: adminer
     restart: always
     ports:
       - 8080:8080
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
+      - ADMINER_DESIGN=hever
     networks:
       - fastapi_demo_net
 
