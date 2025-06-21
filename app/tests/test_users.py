@@ -74,7 +74,7 @@ def test_login(client: TestClient, test_user: User):
         ("abc1@test.com", None, 422),
     ],
 )
-def test_incorrent_login(
+def test_incorrect_login(
     client: TestClient, email: str | None, password: str | None, status_code: int
 ):
     data = {}
