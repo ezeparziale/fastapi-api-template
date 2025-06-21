@@ -1,3 +1,4 @@
+from collections.abc import Generator
 from unittest.mock import MagicMock
 
 import pytest
@@ -20,7 +21,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 
 @pytest.fixture()
-def session() -> Session:  # type: ignore
+def session() -> Generator[Session]:
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
@@ -31,7 +32,7 @@ def session() -> Session:  # type: ignore
 
 
 @pytest.fixture()
-def client(session: Session) -> TestClient:  # type: ignore
+def client(session: Session) -> Generator[TestClient]:
     def override_get_db():
         try:
             yield session
