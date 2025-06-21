@@ -100,7 +100,7 @@ def test_get_one_post(authorized_client: TestClient, test_posts: list[Post]):
 
 @pytest.mark.parametrize(
     "title, content, published",
-    [("Titulo1", "Contenido1", True), ("Titulo2", "Contenido2", False)],
+    [("Title1", "Content1", True), ("Title2", "Content2", False)],
 )
 def test_create_post(
     authorized_client: TestClient,
