@@ -302,6 +302,13 @@ def update_credit_card(
         204: {
             "description": "Credit card deleted",
         },
+        404: {
+            "description": "Credit card not found",
+            "model": MessageDetail,
+            "content": {
+                "application/json": {"example": {"detail": "Credit card not found"}}
+            },
+        },
     },
 )
 def delete_credit_card(
@@ -315,9 +322,14 @@ def delete_credit_card(
     stmt_select = select(UserCreditCard).filter_by(user_id=current_user.id)
     existing_credit_card = db.execute(stmt_select).scalars().first()
 
-    if existing_credit_card:
-        # Delete credit card
-        db.delete(existing_credit_card)
-        db.commit()
+    if not existing_credit_card:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Credit card not found",
+        )
+
+    # Delete credit card
+    db.delete(existing_credit_card)
+    db.commit()
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
