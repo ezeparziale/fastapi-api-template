@@ -241,7 +241,8 @@ def get_credit_card(
     current_user: CurrentUser,
 ) -> UserCreditCardOut:
     """
-    ### Get credit card
+    ### Get credit card from current user
+    This endpoint allows the current user to retrieve their credit card information.
     """
     # Get credit card
     credit_card = current_user.credit_card
@@ -276,7 +277,8 @@ def update_credit_card(
     db: Session = Depends(get_db),
 ) -> MessageDetail:
     """
-    ### Update credit card
+    ### Update credit card from current user
+    This endpoint allows the current user to update their credit card information.
     """
     # Check if credit card exists
     stmt_select = select(UserCreditCard).filter_by(user_id=current_user.id)
@@ -316,7 +318,8 @@ def delete_credit_card(
     db: Session = Depends(get_db),
 ) -> Response:
     """
-    ### Delete credit card
+    ### Delete credit card from current user
+    This endpoint allows the current user to delete their credit card information.
     """
     # Check if credit card exists
     stmt_select = select(UserCreditCard).filter_by(user_id=current_user.id)
