@@ -7,6 +7,7 @@ from app.models import User
 from app.schemas import Token, UserOut
 
 
+# Test: Get all users should return 200 and valid user data
 def test_get_all_users(
     authorized_client: TestClient, test_user: User, test_user2: User
 ):
@@ -22,6 +23,7 @@ def test_get_all_users(
     assert res.status_code == 200
 
 
+# Test: Create user with various scenarios (new, existing, invalid email, etc.)
 @pytest.mark.parametrize(
     "email, password, status_code",
     [
@@ -50,6 +52,7 @@ def test_create_user(
         assert new_user.email == email
 
 
+# Test: Login with correct credentials should return a valid token
 def test_login(client: TestClient, test_user: User):
     res = client.post(
         "/api/v1/auth/login",
@@ -64,6 +67,7 @@ def test_login(client: TestClient, test_user: User):
     assert res.status_code == 200
 
 
+# Test: Login with incorrect credentials or missing fields should fail
 @pytest.mark.parametrize(
     "email, password, status_code",
     [
@@ -88,6 +92,7 @@ def test_incorrect_login(
     assert res.status_code == status_code
 
 
+# Test: Get current user info (me endpoint) should return correct user
 def test_get_me(authorized_client: TestClient, test_user: User):
     res = authorized_client.get("/api/v1/users/me")
     print(res.json())
@@ -96,6 +101,7 @@ def test_get_me(authorized_client: TestClient, test_user: User):
     assert res.status_code == 200
 
 
+# Test: Get users sorted by various fields, including invalid ones
 @pytest.mark.parametrize(
     "fields, status_code",
     [
@@ -122,6 +128,7 @@ def test_get_users_sort_by_fields(
     assert res.status_code == status_code
 
 
+# Test: Search users by email should return the correct user
 def test_get_users_search(authorized_client: TestClient, test_user: User):
     params = {"search": test_user["email"]}
     res = authorized_client.get("/api/v1/users", params=params)
@@ -132,6 +139,7 @@ def test_get_users_search(authorized_client: TestClient, test_user: User):
     assert data[0]["email"] == test_user["email"]
 
 
+# Test: Get user by id should return 200 if exists, 404 if not
 @pytest.mark.parametrize(
     "id, status_code",
     [(1, 200), (2, 200), (999, 404)],
