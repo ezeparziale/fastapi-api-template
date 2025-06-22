@@ -85,7 +85,6 @@ openssl rand -base64 64
 
 :closed_lock_with_key: How to create an encryption key:
 
-
 To create an encryption key for securing sensitive data, you can use the `generate_key.py` script provided in the repository. Run the following command:
 
 ```bash
