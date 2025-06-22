@@ -3,9 +3,10 @@ from typing import Annotated
 
 from authlib.integrations.starlette_client import OAuth
 from authlib.jose import jwt
-from authlib.jose.errors import BadSignatureError
+from authlib.jose.errors import JoseError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -41,7 +42,7 @@ def create_access_token(data: dict) -> str:
     return encoded_jwt.decode("utf-8")
 
 
-async def get_current_user(
+def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)
 ) -> User:
     credentials_exception = HTTPException(
@@ -51,11 +52,12 @@ async def get_current_user(
     )
     try:
         payload = jwt.decode(token, SECRET_KEY)
+        payload.validate()
         sub: int | None = payload.get("sub", None)
         if sub is None:
             raise credentials_exception
         token_data = TokenData(id=sub)
-    except BadSignatureError as exc:
+    except (JoseError, ValidationError) as exc:
         raise credentials_exception from exc
 
     stmt_select = select(User).where(User.id == token_data.id)
