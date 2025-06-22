@@ -1,4 +1,4 @@
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import AnyHttpUrl, BeforeValidator, PostgresDsn, computed_field
 from pydantic_core import MultiHostUrl
@@ -15,6 +15,7 @@ def parse_cors(v: Any) -> list[str] | str:
 
 class Settings(BaseSettings):
     # FastAPI
+    ENVIRONMENT: Literal["local", "staging", "production"] = "local"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "FastAPI Google Auth Login"
