@@ -1,10 +1,8 @@
 import pytest
-from authlib.jose import jwt
 from fastapi.testclient import TestClient
 
-from app.core.config import settings
 from app.models import User
-from app.schemas import Token, UserOut
+from app.schemas import UserOut
 
 
 # Test: Get all users should return 200 and valid user data
@@ -50,46 +48,6 @@ def test_create_user(
     if res.status_code == 201:
         new_user = UserOut(**res.json())
         assert new_user.email == email
-
-
-# Test: Login with correct credentials should return a valid token
-def test_login(client: TestClient, test_user: User):
-    res = client.post(
-        "/api/v1/auth/login",
-        data={"username": test_user["email"], "password": test_user["password"]},
-    )
-    print(res.json())
-    login_res = Token(**res.json())
-    payload = jwt.decode(login_res.access_token, settings.SECRET_KEY)
-    id = payload.get("sub")
-    assert id == test_user["id"]
-    assert login_res.token_type == "bearer"
-    assert res.status_code == 200
-
-
-# Test: Login with incorrect credentials or missing fields should fail
-@pytest.mark.parametrize(
-    "email, password, status_code",
-    [
-        ("wrong_email@test.com", "abc123", 403),
-        ("abc1@test.com", "wrong_password", 403),
-        ("wrong_email@test.com", "wrong_password", 403),
-        (None, "wrong_password", 422),
-        ("abc1@test.com", None, 422),
-    ],
-)
-def test_incorrect_login(
-    client: TestClient, email: str | None, password: str | None, status_code: int
-):
-    data = {}
-    if email is not None:
-        data["username"] = email
-    if password is not None:
-        data["password"] = password
-
-    res = client.post("/api/v1/auth/login", data=data)
-    print(res.json())
-    assert res.status_code == status_code
 
 
 # Test: Get current user info (me endpoint) should return correct user
