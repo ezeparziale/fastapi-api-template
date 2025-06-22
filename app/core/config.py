@@ -35,6 +35,11 @@ class Settings(BaseSettings):
         list[AnyHttpUrl] | str, BeforeValidator(parse_cors)
     ] = []
 
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def all_cors_origins(self) -> list[str]:
+        return [str(origin).strip("/") for origin in settings.BACKEND_CORS_ORIGINS]
+
     # Jwt
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
