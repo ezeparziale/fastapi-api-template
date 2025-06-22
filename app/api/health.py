@@ -40,6 +40,7 @@ def health_api(db: Session = Depends(get_db)) -> APIStatus:
         db_status = "Unhealthy"
 
     resp = APIStatus(
+        environment=settings.ENVIRONMENT,
         status="Healthy",
         db_status=db_status,
         timestamp=timestamp,

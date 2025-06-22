@@ -4,6 +4,10 @@ from pydantic import BaseModel, Field
 
 
 class APIStatus(BaseModel):
+    environment: str = Field(
+        description="Represents the environment in which the API is running",
+        examples=["local", "staging", "production"],
+    )
     status: str = Field(
         description="Represents the health status of the API", examples=["Healthy"]
     )
