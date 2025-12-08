@@ -2,7 +2,7 @@
 name = "fastapi-api-template"
 description = "Fastapi api template"
 readme = "README.md"
-requires-python = ">= 3.13"
+requires-python = ">= 3.14"
 
 [tool.isort]
 profile = "black"

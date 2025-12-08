@@ -19,7 +19,7 @@ This template provides a robust starting point for building APIs with FastAPI. I
 ## :floppy_disk: Installation
 
 > [!IMPORTANT]
-> Min Python version: 3.13
+> Min Python version: 3.14
 
 Clone this repo:
 
