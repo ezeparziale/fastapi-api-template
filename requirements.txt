@@ -1,6 +1,6 @@
 fastapi[all]==0.124.0
 Authlib==1.6.5
-SQLAlchemy==2.0.43
+SQLAlchemy==2.0.45
 psycopg2==2.9.11
 bcrypt==4.3.0
 alembic==1.17.1
