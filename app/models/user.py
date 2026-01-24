@@ -19,8 +19,8 @@ class User(Base, TimestampMixin):
     email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
 
-    posts: Mapped[list["Post"]] = relationship(back_populates="owner")
-    credit_card: Mapped["UserCreditCard"] = relationship(back_populates="user")
+    posts: Mapped[list[Post]] = relationship(back_populates="owner")
+    credit_card: Mapped[UserCreditCard] = relationship(back_populates="user")
 
     def __repr__(self) -> str:
         return f"User(id={self.id}, email={self.email}, created_at={self.created_at})"
