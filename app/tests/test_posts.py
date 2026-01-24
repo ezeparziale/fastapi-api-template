@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -14,7 +16,7 @@ def test_get_all_posts(authorized_client: TestClient, test_posts: list[Post]):
 
     data = res.json()
     [validate(item) for item in data]
-    print(data)
+    logging.debug(data)
 
     assert len(res.json()) == len(test_posts)
     assert res.status_code == 200
@@ -47,7 +49,7 @@ def test_get_posts_sort_by_fields(
 ):
     params = {"sort_by": fields}
     res = authorized_client.get("/api/v1/posts", params=params)
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == status_code
 
 
@@ -55,53 +57,52 @@ def test_get_posts_sort_by_fields(
 def test_get_posts_search(authorized_client: TestClient, test_posts: list[Post]):
     params = {"search": test_posts[0].title}
     res = authorized_client.get("/api/v1/posts", params=params)
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == 200
     data = res.json()
-    print(data)
+    logging.debug(data)
     assert data[0]["Post"]["title"] == test_posts[0].title
 
 
 # Test: Search posts with no matching results should return empty list
-def test_get_posts_search_no_posts(
-    authorized_client: TestClient, test_posts: list[Post]
-):
+@pytest.mark.usefixtures("test_posts")
+def test_get_posts_search_no_posts(authorized_client: TestClient):
     params = {"search": "xxxx"}
     res = authorized_client.get("/api/v1/posts", params=params)
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == 200
     data = res.json()
-    print(data)
+    logging.debug(data)
     assert len(data) == 0
 
 
 # Test: Unauthorized user should not be able to get all posts
 def test_unauthorized_user_get_all_posts(client: TestClient):
     res = client.get("/api/v1/posts/")
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == 401
 
 
 # Test: Unauthorized user should not be able to get a single post
 def test_unauthorized_user_get_one_posts(client: TestClient, test_posts: list[Post]):
     res = client.get(f"/api/v1/posts/{test_posts[0].id}")
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == 401
 
 
 # Test: Get a non-existent post should return 404
 def test_get_one_post_non_exist(authorized_client: TestClient):
-    res = authorized_client.get("/api/v1/posts/999999999999")
-    print(res.json())
+    res = authorized_client.get("/api/v1/posts/999999999")
+    logging.debug(res.json())
     assert res.status_code == 404
 
 
 # Test: Get a single post by id should return the correct post
 def test_get_one_post(authorized_client: TestClient, test_posts: list[Post]):
     res = authorized_client.get(f"/api/v1/posts/{test_posts[0].id}")
-    print(res.json())
+    logging.debug(res.json())
     post = PostOut(**res.json())
-    print(post)
+    logging.debug(post)
     assert post.Post.id == test_posts[0].id
     assert res.status_code == 200
 
@@ -123,7 +124,7 @@ def test_create_post(
         json={"title": title, "content": content, "published": published},
     )
 
-    print(res.json())
+    logging.debug(res.json())
     created_post = NewPostOut(**res.json())
 
     assert res.status_code == 201
@@ -141,7 +142,7 @@ def test_create_post_default_published_true(
         "/api/v1/posts/", json={"title": "asd", "content": "qwe"}
     )
 
-    print(res.json())
+    logging.debug(res.json())
     created_post = NewPostOut(**res.json())
 
     assert res.status_code == 201
@@ -154,35 +155,35 @@ def test_create_post_default_published_true(
 # Test: Unauthorized user should not be able to create a post
 def test_unauthorized_create_post(client: TestClient):
     res = client.post("/api/v1/posts/", json={"title": "asd", "content": "qwe"})
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == 401
 
 
 # Test: Unauthorized user should not be able to delete a post
 def test_unauthorized_delete_post(client: TestClient, test_posts: list[Post]):
     res = client.delete(f"/api/v1/posts/{test_posts[0].id}")
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == 401
 
 
 # Test: Delete a post successfully should return 204
 def test_delete_post_success(authorized_client: TestClient, test_posts: list[Post]):
     res = authorized_client.delete(f"/api/v1/posts/{test_posts[0].id}")
-    print(res)
+    logging.debug(res)
     assert res.status_code == 204
 
 
 # Test: Delete a non-existent post should return 404
 def test_delete_post_non_exists(authorized_client: TestClient):
-    res = authorized_client.delete("/api/v1/posts/9999999999")
-    print(res)
+    res = authorized_client.delete("/api/v1/posts/999999999")
+    logging.debug(res)
     assert res.status_code == 404
 
 
 # Test: User should not be able to delete another user's post (should return 403)
 def test_delete_other_user_post(authorized_client: TestClient, test_posts: list[Post]):
     res = authorized_client.delete(f"/api/v1/posts/{test_posts[2].id}")
-    print(res)
+    logging.debug(res)
     assert res.status_code == 403
 
 
@@ -190,9 +191,9 @@ def test_delete_other_user_post(authorized_client: TestClient, test_posts: list[
 def test_update_post(authorized_client: TestClient, test_posts: list[Post]):
     data = {"title": "new title", "content": "new content", "id": test_posts[0].id}
     res = authorized_client.put(f"/api/v1/posts/{test_posts[0].id}", json=data)
-    print(res)
+    logging.debug(res)
     updated_post = PostUpdateOut(**res.json())
-    print(updated_post)
+    logging.debug(updated_post)
     assert res.status_code == 200
     assert updated_post.title == data["title"]
     assert updated_post.content == data["content"]
@@ -202,20 +203,20 @@ def test_update_post(authorized_client: TestClient, test_posts: list[Post]):
 def test_update_other_user_post(authorized_client: TestClient, test_posts: list[Post]):
     data = {"title": "new title", "content": "new content", "id": test_posts[2].id}
     res = authorized_client.put(f"/api/v1/posts/{test_posts[2].id}", json=data)
-    print(res)
+    logging.debug(res)
     assert res.status_code == 403
 
 
 # Test: Unauthorized user should not be able to update a post
 def test_unauthorized_update_post(client: TestClient, test_posts: list[Post]):
     res = client.put(f"/api/v1/posts/{test_posts[0].id}")
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == 401
 
 
 # Test: Update a non-existent post should return 404
 def test_update_post_non_exists(authorized_client: TestClient, test_posts: list[Post]):
     data = {"title": "new title", "content": "new content", "id": test_posts[2].id}
-    res = authorized_client.put("/api/v1/posts/9999999999", json=data)
-    print(res)
+    res = authorized_client.put("/api/v1/posts/999999999", json=data)
+    logging.debug(res)
     assert res.status_code == 404
