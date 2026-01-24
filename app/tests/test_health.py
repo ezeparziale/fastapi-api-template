@@ -1,3 +1,5 @@
+import logging
+
 from fastapi.testclient import TestClient
 
 from app.schemas import APIStatus
@@ -12,7 +14,7 @@ def test_api_health(client: TestClient):
 
     data = res.json()
     validate(data)
-    print(data)
+    logging.debug(data)
 
     assert res.status_code == 200
 
@@ -27,7 +29,7 @@ def test_api_health_db_error(client_with_db_error: TestClient):
 
     data = res.json()
     validate(data)
-    print(data)
+    logging.debug(data)
 
     assert res.status_code == 200
     assert data["db_status"] == "Unhealthy"

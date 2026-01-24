@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -18,25 +20,23 @@ def test_votes_on_post(authorized_client: TestClient, test_posts: list[Post]):
     res = authorized_client.post(
         "/api/v1/votes/", json={"post_id": test_posts[0].id, "dir": 1}
     )
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == 201
 
 
 # Test: Voting twice on the same post should return 409
-def test_vote_twice_post(
-    authorized_client: TestClient, test_posts: list[Post], test_vote: None
-):
+@pytest.mark.usefixtures("test_vote")
+def test_vote_twice_post(authorized_client: TestClient, test_posts: list[Post]):
     res = authorized_client.post(
         "/api/v1/votes/", json={"post_id": test_posts[0].id, "dir": 1}
     )
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == 409
 
 
 # Test: Deleting a vote should return 204
-def test_delete_vote(
-    authorized_client: TestClient, test_posts: list[Post], test_vote: None
-):
+@pytest.mark.usefixtures("test_vote")
+def test_delete_vote(authorized_client: TestClient, test_posts: list[Post]):
     res = authorized_client.post(
         "/api/v1/votes/", json={"post_id": test_posts[0].id, "dir": 0}
     )
@@ -48,19 +48,19 @@ def test_delete_vote_non_exist(authorized_client: TestClient, test_posts: list[P
     res = authorized_client.post(
         "/api/v1/votes/", json={"post_id": test_posts[0].id, "dir": 0}
     )
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == 404
 
 
 # Test: Voting on a non-existent post should return 404
 def test_vote_post_non_exist(authorized_client: TestClient):
     res = authorized_client.post("/api/v1/votes/", json={"post_id": 9999999, "dir": 0})
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == 404
 
 
 # Test: Unauthorized user should not be able to vote
 def test_vote_unauthorized_user(client: TestClient, test_posts: list[Post]):
     res = client.post("/api/v1/votes/", json={"post_id": test_posts[0].id, "dir": 1})
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == 401

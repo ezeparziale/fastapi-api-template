@@ -45,12 +45,12 @@ def test_login(client: TestClient, test_user: User):
         ("abc1@test.com", None, 422),  # Missing password
     ],
 )
+@pytest.mark.usefixtures("test_user")
 def test_incorrect_login(
     client: TestClient,
     email: str | None,
     password: str | None,
     status_code: int,
-    test_user: User,  # noqa: F841
 ):
     # Given: login data, which may be incorrect or incomplete
     data = {}

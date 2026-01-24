@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -6,9 +8,8 @@ from app.schemas import UserOut
 
 
 # Test: Get all users should return 200 and valid user data
-def test_get_all_users(
-    authorized_client: TestClient, test_user: User, test_user2: User
-):
+@pytest.mark.usefixtures("test_user", "test_user2")
+def test_get_all_users(authorized_client: TestClient):
     res = authorized_client.get("/api/v1/users/")
 
     def validate(user):
@@ -16,7 +17,7 @@ def test_get_all_users(
 
     data = res.json()
     [validate(item) for item in data]
-    print(data)
+    logging.debug(data)
 
     assert res.status_code == 200
 
@@ -33,16 +34,16 @@ def test_get_all_users(
         ("no_password@test.com", None, 422),
     ],
 )
+@pytest.mark.usefixtures("test_user")
 def test_create_user(
     client: TestClient,
     email: str | None,
     password: str | None,
     status_code: int,
-    test_user: User,  # noqa
 ):
     data = {"email": email, "password": password}
     res = client.post("/api/v1/users/", json=data)
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == status_code
 
     if res.status_code == 201:
@@ -53,7 +54,7 @@ def test_create_user(
 # Test: Get current user info (me endpoint) should return correct user
 def test_get_me(authorized_client: TestClient, test_user: User):
     res = authorized_client.get("/api/v1/users/me")
-    print(res.json())
+    logging.debug(res.json())
     new_user = UserOut(**res.json())
     assert new_user.email == test_user["email"]
     assert res.status_code == 200
@@ -82,7 +83,7 @@ def test_get_users_sort_by_fields(
 ):
     params = {"sort_by": fields}
     res = authorized_client.get("/api/v1/users", params=params)
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == status_code
 
 
@@ -90,10 +91,10 @@ def test_get_users_sort_by_fields(
 def test_get_users_search(authorized_client: TestClient, test_user: User):
     params = {"search": test_user["email"]}
     res = authorized_client.get("/api/v1/users", params=params)
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == 200
     data = res.json()
-    print(data)
+    logging.debug(data)
     assert data[0]["email"] == test_user["email"]
 
 
@@ -102,15 +103,14 @@ def test_get_users_search(authorized_client: TestClient, test_user: User):
     "id, status_code",
     [(1, 200), (2, 200), (999, 404)],
 )
+@pytest.mark.usefixtures("test_user", "test_user2")
 def test_get_user(
     authorized_client: TestClient,
     id: int,
     status_code: int,
-    test_user: User,
-    test_user2: User,
 ):
     res = authorized_client.get(f"/api/v1/users/{id}")
-    print(res.json())
+    logging.debug(res.json())
     assert res.status_code == status_code
 
     def validate(user):
@@ -119,4 +119,4 @@ def test_get_user(
     if res.status_code == 200:
         data = res.json()
         validate(data)
-        print(data)
+        logging.debug(data)
