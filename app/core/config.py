@@ -1,7 +1,6 @@
 from typing import Annotated, Any, Literal
 
 from pydantic import AnyHttpUrl, BeforeValidator, PostgresDsn, computed_field
-from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -63,8 +62,8 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
-        return MultiHostUrl.build(
-            scheme="postgresql",
+        return PostgresDsn.build(
+            scheme="postgresql+psycopg",
             username=self.POSTGRES_USER,
             password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_HOSTNAME,
