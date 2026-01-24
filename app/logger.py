@@ -6,7 +6,7 @@ from logging.config import dictConfig
 from loguru import logger
 
 
-def setup_logging():
+def setup_logging() -> None:
     # Setting loggers
     dictConfig(
         {

@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -61,6 +62,6 @@ class UserCreditCardOut(BaseModel):
     def mask_card_number(card_number: str) -> str:
         return "**** **** **** " + card_number[-4:]
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any):
         super().__init__(**data)
         self.card_number = self.mask_card_number(self.card_number)

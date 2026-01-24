@@ -1,5 +1,5 @@
 from datetime import UTC, datetime, timedelta
-from typing import Annotated
+from typing import Annotated, Any, cast
 
 from authlib.integrations.starlette_client import OAuth
 from authlib.jose import jwt
@@ -32,14 +32,14 @@ oauth.register(
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
 
-def create_access_token(data: dict) -> str:
+def create_access_token(data: dict[str, Any]) -> str:
     to_encode = data.copy()
     expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
         payload=to_encode, key=SECRET_KEY, header={"alg": ALGORITHM}
     )
-    return encoded_jwt.decode("utf-8")
+    return cast(bytes, encoded_jwt).decode("utf-8")
 
 
 def get_current_user(
