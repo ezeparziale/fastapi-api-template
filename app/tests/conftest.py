@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Generator
 from unittest.mock import MagicMock
 
@@ -49,7 +50,7 @@ def test_user(client: TestClient) -> User:
     user_data = {"email": "abc1@test.com", "password": "abc123"}
     res = client.post("/api/v1/users/", json=user_data)
     assert res.status_code == 201
-    print(res.json())
+    logging.debug(res.json())
     new_user = res.json()
     new_user["password"] = user_data["password"]
     return new_user
@@ -60,7 +61,7 @@ def test_user2(client: TestClient) -> User:
     user_data = {"email": "abc2@test.com", "password": "abc123"}
     res = client.post("/api/v1/users/", json=user_data)
     assert res.status_code == 201
-    print(res.json())
+    logging.debug(res.json())
     new_user = res.json()
     new_user["password"] = user_data["password"]
     return new_user
