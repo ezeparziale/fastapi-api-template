@@ -101,7 +101,7 @@ def get_user_me(
 )
 def get_user(
     id: Annotated[int, Path(description="The ID of the user to get")],
-    current_user: CurrentUser,
+    _current_user: CurrentUser,
     db: Session = Depends(get_db),
 ) -> UserOut:
     """
@@ -158,7 +158,7 @@ def get_user(
 def get_users(
     response: Response,
     filter_query: FilterParams,
-    current_user: CurrentUser,
+    _current_user: CurrentUser,
     db: Session = Depends(get_db),
 ) -> list[UserOut]:
     """

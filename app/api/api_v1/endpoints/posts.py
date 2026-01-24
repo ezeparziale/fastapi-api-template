@@ -60,7 +60,7 @@ router = APIRouter()
 def get_posts(
     response: Response,
     filter_query: FilterParams,
-    current_user: CurrentUser,
+    _current_user: CurrentUser,
     db: Session = Depends(get_db),
 ) -> list[PostOut]:
     """
@@ -164,7 +164,7 @@ def create_posts(
 )
 def get_post(
     id: Annotated[int, Path(description="The ID of the post to get")],
-    current_user: CurrentUser,
+    _current_user: CurrentUser,
     db: Session = Depends(get_db),
 ) -> PostOut:
     """
