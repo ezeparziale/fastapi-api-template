@@ -9,10 +9,10 @@ from app.schemas import UserOut
 
 # Test: Get all users should return 200 and valid user data
 @pytest.mark.usefixtures("test_user", "test_user2")
-def test_get_all_users(authorized_client: TestClient):
+def test_get_all_users(authorized_client: TestClient) -> None:
     res = authorized_client.get("/api/v1/users/")
 
-    def validate(user):
+    def validate(user) -> UserOut:
         return UserOut(**user)
 
     data = res.json()
@@ -40,7 +40,7 @@ def test_create_user(
     email: str | None,
     password: str | None,
     status_code: int,
-):
+) -> None:
     data = {"email": email, "password": password}
     res = client.post("/api/v1/users/", json=data)
     logging.debug(res.json())
@@ -52,11 +52,11 @@ def test_create_user(
 
 
 # Test: Get current user info (me endpoint) should return correct user
-def test_get_me(authorized_client: TestClient, test_user: User):
+def test_get_me(authorized_client: TestClient, test_user: User) -> None:
     res = authorized_client.get("/api/v1/users/me")
     logging.debug(res.json())
     new_user = UserOut(**res.json())
-    assert new_user.email == test_user["email"]
+    assert new_user.email == test_user.email
     assert res.status_code == 200
 
 
@@ -80,7 +80,7 @@ def test_get_me(authorized_client: TestClient, test_user: User):
 )
 def test_get_users_sort_by_fields(
     authorized_client: TestClient, fields: str, status_code: int
-):
+) -> None:
     params = {"sort_by": fields}
     res = authorized_client.get("/api/v1/users", params=params)
     logging.debug(res.json())
@@ -88,14 +88,14 @@ def test_get_users_sort_by_fields(
 
 
 # Test: Search users by email should return the correct user
-def test_get_users_search(authorized_client: TestClient, test_user: User):
-    params = {"search": test_user["email"]}
+def test_get_users_search(authorized_client: TestClient, test_user: User) -> None:
+    params = {"search": test_user.email}
     res = authorized_client.get("/api/v1/users", params=params)
     logging.debug(res.json())
     assert res.status_code == 200
     data = res.json()
     logging.debug(data)
-    assert data[0]["email"] == test_user["email"]
+    assert data[0]["email"] == test_user.email
 
 
 # Test: Get user by id should return 200 if exists, 404 if not
@@ -108,7 +108,7 @@ def test_get_user(
     authorized_client: TestClient,
     id: int,
     status_code: int,
-):
+) -> None:
     res = authorized_client.get(f"/api/v1/users/{id}")
     logging.debug(res.json())
     assert res.status_code == status_code

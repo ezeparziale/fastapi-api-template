@@ -9,14 +9,14 @@ from app.core import oauth
 
 # Mock settings values
 @pytest.fixture(autouse=True)
-def mock_settings(monkeypatch):
+def mock_settings(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(oauth, "SECRET_KEY", "testsecret")
     monkeypatch.setattr(oauth, "ALGORITHM", "HS256")
     monkeypatch.setattr(oauth, "ACCESS_TOKEN_EXPIRE_MINUTES", 15)
 
 
 # Test create_access_token returns a valid JWT string
-def test_create_access_token_returns_jwt(monkeypatch):
+def test_create_access_token_returns_jwt(monkeypatch: pytest.MonkeyPatch) -> None:
     # Patch jwt.encode to return bytes
     monkeypatch.setattr(oauth.jwt, "encode", lambda **kwargs: b"token123")
     data = {"sub": 1}
@@ -25,7 +25,7 @@ def test_create_access_token_returns_jwt(monkeypatch):
 
 
 # Test get_current_user returns user when token is valid and user exists
-def test_get_current_user_success(monkeypatch):
+def test_get_current_user_success(monkeypatch: pytest.MonkeyPatch) -> None:
     # Mock jwt.decode to return a mock object that can be validated and queried
     mock_payload = MagicMock()
     mock_payload.get.return_value = 1  # Mocks payload.get('sub', None)
@@ -48,7 +48,7 @@ def test_get_current_user_success(monkeypatch):
 
 
 # Test get_current_user raises HTTPException if token is invalid (BadSignatureError)
-def test_get_current_user_invalid_token(monkeypatch):
+def test_get_current_user_invalid_token(monkeypatch: pytest.MonkeyPatch) -> None:
     # Patch jwt.decode to raise BadSignatureError
     monkeypatch.setattr(
         oauth.jwt,
@@ -62,7 +62,7 @@ def test_get_current_user_invalid_token(monkeypatch):
 
 
 # Test get_current_user raises HTTPException if sub is missing in payload
-def test_get_current_user_missing_sub(monkeypatch):
+def test_get_current_user_missing_sub(monkeypatch: pytest.MonkeyPatch) -> None:
     mock_payload = MagicMock()
     mock_payload.get.return_value = None  # Mocks payload.get('sub', None) -> None
     monkeypatch.setattr(oauth.jwt, "decode", lambda token, key: mock_payload)
@@ -75,7 +75,7 @@ def test_get_current_user_missing_sub(monkeypatch):
 
 
 # Test get_current_user raises HTTPException for expired token
-def test_get_current_user_expired_token(monkeypatch):
+def test_get_current_user_expired_token(monkeypatch: pytest.MonkeyPatch) -> None:
     # Mock jwt.decode to return a payload
     mock_payload = MagicMock()
     # Mock that validate() raises ExpiredTokenError
@@ -90,7 +90,7 @@ def test_get_current_user_expired_token(monkeypatch):
 
 
 # # Test get_current_user raises HTTPException if user not found in db
-def test_get_current_user_user_not_found(monkeypatch):
+def test_get_current_user_user_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
     # Mock jwt.decode to return a mock object
     mock_payload = MagicMock()
     mock_payload.get.return_value = 1

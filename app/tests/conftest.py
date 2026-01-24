@@ -34,7 +34,7 @@ def session() -> Generator[Session]:
 
 @pytest.fixture()
 def client(session: Session) -> Generator[TestClient]:
-    def override_get_db():
+    def override_get_db() -> Generator[Session]:
         try:
             yield session
         finally:
@@ -53,7 +53,7 @@ def test_user(client: TestClient) -> User:
     logging.debug(res.json())
     new_user = res.json()
     new_user["password"] = user_data["password"]
-    return new_user
+    return User(**new_user)
 
 
 @pytest.fixture
@@ -64,29 +64,29 @@ def test_user2(client: TestClient) -> User:
     logging.debug(res.json())
     new_user = res.json()
     new_user["password"] = user_data["password"]
-    return new_user
+    return User(**new_user)
 
 
 @pytest.fixture
 def token(test_user: User) -> str:
-    return create_access_token({"sub": test_user["id"]})
+    return create_access_token({"sub": test_user.id})
 
 
 @pytest.fixture
 def authorized_client(client: TestClient, token: str) -> TestClient:
-    client.headers = {**client.headers, "Authorization": f"Bearer {token}"}  # type: ignore
+    client.headers = {**client.headers, "Authorization": f"Bearer {token}"}
     return client
 
 
 @pytest.fixture
 def test_posts(test_user: User, test_user2: User, session: Session) -> list[Post]:
     posts_data = [
-        {"title": "Title_1", "content": "Content_1", "owner_id": test_user["id"]},
-        {"title": "Title_2", "content": "Content_2", "owner_id": test_user["id"]},
-        {"title": "Title_2", "content": "Content_2", "owner_id": test_user2["id"]},
+        {"title": "Title_1", "content": "Content_1", "owner_id": test_user.id},
+        {"title": "Title_2", "content": "Content_2", "owner_id": test_user.id},
+        {"title": "Title_2", "content": "Content_2", "owner_id": test_user2.id},
     ]
 
-    def create_user_model(post: dict):
+    def create_user_model(post: dict[str, str]) -> Post:
         return Post(**post)
 
     post_map = map(create_user_model, posts_data)
@@ -98,15 +98,15 @@ def test_posts(test_user: User, test_user2: User, session: Session) -> list[Post
 
 
 @pytest.fixture
-def mock_db_error():
+def mock_db_error() -> MagicMock:
     mock_session = MagicMock()
     mock_session.execute.side_effect = SQLAlchemyError("Simulated database error")
     return mock_session
 
 
 @pytest.fixture
-def client_with_db_error(mock_db_error):
-    def override_get_db():
+def client_with_db_error(mock_db_error: MagicMock) -> Generator[TestClient]:
+    def override_get_db() -> Generator[Session]:
         try:
             yield mock_db_error
         finally:

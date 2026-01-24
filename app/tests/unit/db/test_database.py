@@ -4,13 +4,13 @@ from sqlalchemy.orm import Session
 from app.db import database
 
 
-def test_engine_creation():
+def test_engine_creation() -> None:
     # The engine should be created and bound to the correct URL
     assert database.engine is not None
     assert hasattr(database.engine, "connect")
 
 
-def test_sessionlocal_returns_session():
+def test_sessionlocal_returns_session() -> None:
     # SessionLocal() should return a Session instance
     session = database.SessionLocal()
     try:
@@ -19,12 +19,12 @@ def test_sessionlocal_returns_session():
         session.close()
 
 
-def test_base_is_declarative_base():
+def test_base_is_declarative_base() -> None:
     # Base should be a declarative base class
     assert hasattr(database.Base, "metadata")
 
 
-def test_get_db_yields_session():
+def test_get_db_yields_session() -> None:
     # get_db should yield a session and close it after use
     gen = database.get_db()
     session = next(gen)

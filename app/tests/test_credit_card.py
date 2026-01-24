@@ -1,11 +1,14 @@
+from fastapi.testclient import TestClient
+
+
 # Test: GET /credit-card/ without authorization should return 401
-def test_get_credit_card_unauthorized(client):
+def test_get_credit_card_unauthorized(client: TestClient) -> None:
     response = client.get("/api/v1/credit-card/")
     assert response.status_code == 401
 
 
 # Test: PUT /credit-card/ without authorization should return 401
-def test_update_credit_card_unauthorized(client):
+def test_update_credit_card_unauthorized(client: TestClient) -> None:
     payload = {
         "card_number": "4111111111111111",
         "expiration_date": "2030-12-31",
@@ -16,20 +19,20 @@ def test_update_credit_card_unauthorized(client):
 
 
 # Test: DELETE /credit-card/ without authorization should return 401
-def test_delete_credit_card_unauthorized(client):
+def test_delete_credit_card_unauthorized(client: TestClient) -> None:
     response = client.delete("/api/v1/credit-card/")
     assert response.status_code == 401
 
 
 # Test: GET /credit-card/ when no credit card exists should return 404
-def test_get_credit_card_not_found(authorized_client):
+def test_get_credit_card_not_found(authorized_client: TestClient) -> None:
     response = authorized_client.get("/api/v1/credit-card/")
     assert response.status_code == 404
     assert response.json()["detail"] == "Credit card not found"
 
 
 # Test: PUT /credit-card/ to create and update a credit card, then GET to verify
-def test_update_and_get_credit_card(authorized_client):
+def test_update_and_get_credit_card(authorized_client: TestClient) -> None:
     payload = {
         "card_number": "4111111111111111",
         "expiration_date": "2030-12-31",
@@ -67,7 +70,7 @@ def test_update_and_get_credit_card(authorized_client):
 
 
 # Test: DELETE /credit-card/ to remove the credit card, then GET to verify deletion
-def test_delete_credit_card(authorized_client):
+def test_delete_credit_card(authorized_client: TestClient) -> None:
     payload = {
         "card_number": "4111111111111111",
         "expiration_date": "2030-12-31",
@@ -86,7 +89,7 @@ def test_delete_credit_card(authorized_client):
 
 
 # Test: DELETE /credit-card/ when no credit card exists should return 404
-def test_delete_credit_card_not_found(authorized_client):
+def test_delete_credit_card_not_found(authorized_client: TestClient) -> None:
     response = authorized_client.delete("/api/v1/credit-card/")
     assert response.status_code == 404
     assert response.json()["detail"] == "Credit card not found"

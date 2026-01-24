@@ -10,11 +10,11 @@ from app.schemas import Token
 
 
 # Test: Login with correct credentials should return a valid token
-def test_login(client: TestClient, test_user: User):
+def test_login(client: TestClient, test_user: User) -> None:
     # When: a POST request is made to the login endpoint with correct credentials
     res = client.post(
         "/api/v1/auth/login",
-        data={"username": test_user["email"], "password": test_user["password"]},
+        data={"username": test_user.email, "password": test_user.password},
     )
 
     # Then: the response should be successful (200 OK)
@@ -27,7 +27,7 @@ def test_login(client: TestClient, test_user: User):
     # And: the token payload should contain the correct user ID
     payload = jwt.decode(login_res.access_token, settings.SECRET_KEY)
     user_id = payload.get("sub")
-    assert user_id == test_user["id"]
+    assert user_id == test_user.id
 
 
 # Test: Login with incorrect credentials or missing fields should fail
@@ -51,7 +51,7 @@ def test_incorrect_login(
     email: str | None,
     password: str | None,
     status_code: int,
-):
+) -> None:
     # Given: login data, which may be incorrect or incomplete
     data = {}
     if email is not None:
@@ -70,7 +70,7 @@ def test_incorrect_login(
 # --- Google OAuth Tests ---
 
 
-def test_google_login_redirect(client: TestClient):
+def test_google_login_redirect(client: TestClient) -> None:
     # When: a GET request is made to the Google login endpoint
     response = client.get("/api/v1/auth/login/google", follow_redirects=False)
 
@@ -83,13 +83,13 @@ def test_google_login_redirect(client: TestClient):
     assert "accounts.google.com/o/oauth2/v2/auth" in location_url
 
 
-def test_google_auth_callback_success(client: TestClient, test_user: User):
+def test_google_auth_callback_success(client: TestClient, test_user: User) -> None:
     # Given: A mock for the Google OAuth authorize_access_token method
     # that returns a valid user info payload.
     with patch(
         "app.core.oauth.oauth.google.authorize_access_token",
         new_callable=AsyncMock,
-        return_value={"userinfo": {"email": test_user["email"]}},
+        return_value={"userinfo": {"email": test_user.email}},
     ) as mock_authorize:
         # When: a GET request is made to the Google auth callback endpoint
         response = client.get("/api/v1/auth/google")
@@ -99,11 +99,11 @@ def test_google_auth_callback_success(client: TestClient, test_user: User):
         login_res = Token(**response.json())
         assert login_res.token_type == "bearer"
         payload = jwt.decode(login_res.access_token, settings.SECRET_KEY)
-        assert payload.get("sub") == test_user["id"]
+        assert payload.get("sub") == test_user.id
         mock_authorize.assert_awaited_once()
 
 
-def test_google_auth_callback_user_not_found(client: TestClient):
+def test_google_auth_callback_user_not_found(client: TestClient) -> None:
     # Given: A mock for a non-existent user's email
     with patch(
         "app.core.oauth.oauth.google.authorize_access_token",

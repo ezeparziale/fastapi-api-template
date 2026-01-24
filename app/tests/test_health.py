@@ -6,10 +6,10 @@ from app.schemas import APIStatus
 
 
 # Test: /health endpoint should return 200 and valid APIStatus when healthy
-def test_api_health(client: TestClient):
+def test_api_health(client: TestClient) -> None:
     res = client.get("/health")
 
-    def validate(data):
+    def validate(data) -> APIStatus:
         return APIStatus(**data)
 
     data = res.json()
@@ -21,10 +21,10 @@ def test_api_health(client: TestClient):
 
 # Test: /health endpoint should return 200 and db_status 'Unhealthy'
 # when DB error occurs
-def test_api_health_db_error(client_with_db_error: TestClient):
+def test_api_health_db_error(client_with_db_error: TestClient) -> None:
     res = client_with_db_error.get("/health")
 
-    def validate(data):
+    def validate(data) -> APIStatus:
         return APIStatus(**data)
 
     data = res.json()
