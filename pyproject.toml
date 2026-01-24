@@ -46,6 +46,7 @@ plugins = "pydantic.mypy"
 [tool.coverage.report]
 show_missing = true
 fail_under = 95
+sort = "-Cover"
 exclude_lines = [
     "def __repr__",
     "if TYPE_CHECKING:",
