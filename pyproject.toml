@@ -16,9 +16,11 @@ select = [
     "W",  # pycodestyle warnings
     "F",  # pyflakes
     "I",  # isort
-    "C",  # flake8-comprehensions
+    "C4",  # flake8-comprehensions
     "B",  # flake8-bugbear
     "UP",  # pyupgrade
+    "ARG001", # unused arguments in functions
+    "T201",   # print statements are not allowed
 ]
 ignore = [
     "E203",  # whitespace-before-punctuation
