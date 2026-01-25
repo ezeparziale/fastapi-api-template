@@ -60,7 +60,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
     db.commit()
     db.refresh(new_user)
 
-    return new_user
+    return new_user  # type: ignore[return-value]
 
 
 @router.get(
@@ -80,7 +80,7 @@ def get_user_me(
     """
     ### Get current user info
     """
-    return current_user
+    return current_user  # type: ignore[return-value]
 
 
 @router.get(
@@ -118,7 +118,7 @@ def get_user(
             detail="User not found",
         )
 
-    return user
+    return user  # type: ignore[return-value]
 
 
 @router.get(

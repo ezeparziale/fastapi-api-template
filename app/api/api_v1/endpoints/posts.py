@@ -143,7 +143,7 @@ def create_posts(
     db.commit()
     db.refresh(new_post)
 
-    return new_post
+    return new_post  # type: ignore[return-value]
 
 
 @router.get(
