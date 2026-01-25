@@ -44,7 +44,9 @@ def test_delete_vote(authorized_client: TestClient, test_posts: list[Post]) -> N
 
 
 # Test: Deleting a non-existent vote should return 404
-def test_delete_vote_non_exist(authorized_client: TestClient, test_posts: list[Post]):
+def test_delete_vote_non_exist(
+    authorized_client: TestClient, test_posts: list[Post]
+) -> None:
     res = authorized_client.post(
         "/api/v1/votes/", json={"post_id": test_posts[0].id, "dir": 0}
     )

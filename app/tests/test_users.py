@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,7 +13,7 @@ from app.schemas import UserOut
 def test_get_all_users(authorized_client: TestClient) -> None:
     res = authorized_client.get("/api/v1/users/")
 
-    def validate(user) -> UserOut:
+    def validate(user: dict[str, Any]) -> UserOut:
         return UserOut(**user)
 
     data = res.json()
@@ -113,7 +114,7 @@ def test_get_user(
     logging.debug(res.json())
     assert res.status_code == status_code
 
-    def validate(user):
+    def validate(user: dict[str, Any]) -> UserOut:
         return UserOut(**user)
 
     if res.status_code == 200:

@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,7 +12,7 @@ from app.schemas import NewPostOut, PostOut, PostUpdateOut
 def test_get_all_posts(authorized_client: TestClient, test_posts: list[Post]) -> None:
     res = authorized_client.get("/api/v1/posts/")
 
-    def validate(post) -> PostOut:
+    def validate(post: dict[str, Any]) -> PostOut:
         return PostOut(**post)
 
     data = res.json()

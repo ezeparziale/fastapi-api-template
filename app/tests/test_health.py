@@ -9,7 +9,7 @@ from app.schemas import APIStatus
 def test_api_health(client: TestClient) -> None:
     res = client.get("/health")
 
-    def validate(data) -> APIStatus:
+    def validate(data: dict[str, str]) -> APIStatus:
         return APIStatus(**data)
 
     data = res.json()
@@ -24,7 +24,7 @@ def test_api_health(client: TestClient) -> None:
 def test_api_health_db_error(client_with_db_error: TestClient) -> None:
     res = client_with_db_error.get("/health")
 
-    def validate(data) -> APIStatus:
+    def validate(data: dict[str, str]) -> APIStatus:
         return APIStatus(**data)
 
     data = res.json()

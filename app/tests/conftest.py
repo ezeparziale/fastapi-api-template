@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Generator
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -86,7 +87,7 @@ def test_posts(test_user: User, test_user2: User, session: Session) -> list[Post
         {"title": "Title_2", "content": "Content_2", "owner_id": test_user2.id},
     ]
 
-    def create_user_model(post: dict[str, str]) -> Post:
+    def create_user_model(post: dict[str, Any]) -> Post:
         return Post(**post)
 
     post_map = map(create_user_model, posts_data)
