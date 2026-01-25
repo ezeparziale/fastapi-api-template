@@ -2,8 +2,8 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any, cast
 
 from authlib.integrations.starlette_client import OAuth
-from authlib.jose import jwt
-from authlib.jose.errors import JoseError
+from authlib.jose import jwt as jwt
+from authlib.jose.errors import JoseError as JoseError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import ValidationError
