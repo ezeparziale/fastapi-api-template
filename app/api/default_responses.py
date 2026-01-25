@@ -1,6 +1,8 @@
+from typing import Any
+
 from app.schemas import MessageDetail
 
-default_responses: dict = {
+default_responses: dict[int | str, dict[str, Any]] = {
     401: {
         "description": "Unauthorized",
         "model": MessageDetail,
