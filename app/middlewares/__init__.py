@@ -1,1 +1,1 @@
-from .process_time import ProcessTimeHeaderMiddleware  # noqa: F401
+from .process_time import ProcessTimeHeaderMiddleware as ProcessTimeHeaderMiddleware
