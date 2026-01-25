@@ -38,10 +38,10 @@ ignore = [
 known-third-party = ["fastapi", "pydantic", "starlette"]
 
 [tool.mypy]
-# strict = true
+strict = true
 warn_unused_ignores = true
 ignore_missing_imports = true
-plugins = "pydantic.mypy"
+plugins = "pydantic.mypy,sqlalchemy.ext.mypy.plugin"
 
 [tool.coverage.report]
 show_missing = true
