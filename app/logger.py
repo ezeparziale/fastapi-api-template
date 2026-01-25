@@ -2,6 +2,7 @@ import logging
 import sys
 import time
 from logging.config import dictConfig
+from typing import Any, cast
 
 from loguru import logger
 
@@ -58,17 +59,17 @@ def setup_logging() -> None:
 
     # Intercept default logging to loguru
     class InterceptHandler(logging.Handler):
-        def emit(self, record):
+        def emit(self, record: logging.LogRecord) -> None:
             # Get corresponding Loguru level if it exists.
             try:
-                level = logger.level(record.levelname).name
+                level: str | int = logger.level(record.levelname).name
             except ValueError:
                 level = record.levelno
 
             # Find caller from where originated the logged message.
             frame, depth = sys._getframe(6), 6
             while frame and frame.f_code.co_filename == logging.__file__:
-                frame = frame.f_back
+                frame = cast(Any, frame.f_back)
                 depth += 1
 
             logger.opt(depth=depth, exception=record.exc_info).log(
