@@ -23,7 +23,7 @@ class Post(Base, TimestampMixin):
     owner_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    owner: Mapped[User] = relationship(back_populates="posts")  # noqa: F821
+    owner: Mapped[User] = relationship(back_populates="posts")
 
     def __repr__(self) -> str:
         return f"Post(id={self.id}, title={self.title}, published={self.published}, owner_id={self.owner_id}, created_at={self.created_at}, owner={self.owner})"  # noqa: E501
