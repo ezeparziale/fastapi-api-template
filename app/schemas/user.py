@@ -23,7 +23,7 @@ class UserOut(BaseModel):
 
 class UserCreate(BaseModel):
     email: EmailStr = Field(title="Email of the user", examples=["user@example.com"])
-    password: str = Field(title="Pasword of the user", examples=["secret_password"])
+    password: str = Field(title="Password of the user", examples=["secret_password"])
 
 
 class UserCreditCardIn(BaseModel):
