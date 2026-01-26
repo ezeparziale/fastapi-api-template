@@ -13,7 +13,7 @@ jobs:
       - name: Lint
         run: bash scripts/lint.sh
       - run: bandit --recursive --skip B101,B105 . # B101 is assert statements, B105 for token URL
-      # - run: codespell  # --ignore-words-list="" --skip="*.css,*.js,*.lock"
+      - run: codespell app
       - run: pip install -r requirements.txt || pip install --editable . || pip install .
       - run: mkdir --parents --verbose .mypy_cache
       - run: mypy --ignore-missing-imports --install-types --non-interactive .
