@@ -1,5 +1,5 @@
 fastapi[all]==0.135.1
-Authlib==1.6.8
+Authlib==1.6.9
 SQLAlchemy==2.0.48
 psycopg[binary]==3.3.3
 bcrypt==5.0.0
