@@ -6,6 +6,16 @@ from typing import Any, cast
 
 from loguru import logger
 
+from app.core.config import settings
+
+
+def success_to_info_patcher(record):
+    if record["level"].name == "SUCCESS":
+        level_info = logger.level("INFO")
+        record["level"].name = "INFO"
+        record["level"].no = level_info.no
+        record["level"].icon = level_info.icon
+
 
 def setup_logging() -> None:
     # Setting loggers
@@ -43,19 +53,29 @@ def setup_logging() -> None:
 
     logging.Formatter.converter = time.gmtime
 
+    for name in ["uvicorn", "uvicorn.error"]:
+        logging_logger = logging.getLogger(name)
+        logging_logger.handlers = []
+        logging_logger.propagate = False
+
+    if settings.ENVIRONMENT == "production":
+        logger.configure(patcher=success_to_info_patcher)
+
     unicorn_logger = logging.getLogger("uvicorn.access")
+    uvicorn_level = unicorn_logger.level or 20
+    uvicorn_level_name = logging.getLevelName(uvicorn_level)
 
     logger.remove()
     logger.add(
         sys.stdout,
+        serialize=True if settings.ENVIRONMENT == "production" else False,
         colorize=True,
+        level=uvicorn_level_name,
         format=(
             "{time:YYYY-MM-DD HH:mm:ss.SSS!UTC} +00:00 | "
             "<level>{level}</level>: <level>{message}</level>"
         ),
-        level=unicorn_logger.level,
     )
-    # logger.level("INFO", color="<green>")
 
     # Intercept default logging to loguru
     class InterceptHandler(logging.Handler):
@@ -66,14 +86,22 @@ def setup_logging() -> None:
             except ValueError:
                 level = record.levelno
 
-            # Find caller from where originated the logged message.
-            frame, depth = sys._getframe(6), 6
-            while frame and frame.f_code.co_filename == logging.__file__:
-                frame = cast(Any, frame.f_back)
-                depth += 1
+            depth = 2
+            try:
+                frame = sys._getframe(depth)
+                while frame and frame.f_code.co_filename == logging.__file__:
+                    frame = cast(Any, frame.f_back)
+                    depth += 1
+            except ValueError:
+                pass
 
             logger.opt(depth=depth, exception=record.exc_info).log(
                 level, record.getMessage()
             )
 
     logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+
+    for name in ["uvicorn", "uvicorn.error"]:
+        u_logger = logging.getLogger(name)
+        u_logger.handlers = [InterceptHandler()]
+        u_logger.propagate = False
