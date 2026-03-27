@@ -17,43 +17,66 @@ def success_to_info_patcher(record):
         record["level"].icon = level_info.icon
 
 
+class InterceptHandler(logging.Handler):
+    def emit(self, record: logging.LogRecord) -> None:
+        # Get corresponding Loguru level if it exists.
+        try:
+            level: str | int = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+
+        depth = 2
+        try:
+            frame = sys._getframe(depth)
+            while frame and frame.f_code.co_filename == logging.__file__:
+                frame = cast(Any, frame.f_back)
+                depth += 1
+        except ValueError:
+            pass
+
+        logger.opt(depth=depth, exception=record.exc_info).log(
+            level, record.getMessage()
+        )
+
+
+LOGGING_CONFIG = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "access": {
+            "()": "uvicorn.logging.AccessFormatter",
+            "fmt": (
+                "%(asctime)s.%(msecs)03d +00:00 | "
+                "%(levelprefix)s %(client_addr)s - "
+                '"%(request_line)s" %(status_code)s'
+            ),
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+            "use_colors": True,
+        },
+    },
+    "handlers": {
+        "access": {
+            "formatter": "access",
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+        },
+    },
+    "loggers": {
+        "uvicorn.access": {
+            "handlers": ["access"],
+            "propagate": False,
+        },
+    },
+}
+
+
 def setup_logging() -> None:
     # Setting loggers
-    dictConfig(
-        {
-            "version": 1,
-            "disable_existing_loggers": False,
-            "formatters": {
-                "access": {
-                    "()": "uvicorn.logging.AccessFormatter",
-                    "fmt": (
-                        "%(asctime)s.%(msecs)03d +00:00 | "
-                        "%(levelprefix)s %(client_addr)s - "
-                        '"%(request_line)s" %(status_code)s'
-                    ),
-                    "datefmt": "%Y-%m-%d %H:%M:%S",
-                    "use_colors": True,
-                },
-            },
-            "handlers": {
-                "access": {
-                    "formatter": "access",
-                    "class": "logging.StreamHandler",
-                    "stream": "ext://sys.stdout",
-                },
-            },
-            "loggers": {
-                "uvicorn.access": {
-                    "handlers": ["access"],
-                    "propagate": False,
-                },
-            },
-        }
-    )
+    dictConfig(LOGGING_CONFIG)
 
     logging.Formatter.converter = time.gmtime
 
-    for name in ["uvicorn", "uvicorn.error"]:
+    for name in ["uvicorn", "uvicorn.error", "uvicorn.access"]:
         logging_logger = logging.getLogger(name)
         logging_logger.handlers = []
         logging_logger.propagate = False
@@ -66,6 +89,17 @@ def setup_logging() -> None:
     uvicorn_level_name = logging.getLevelName(uvicorn_level)
 
     logger.remove()
+
+    # --- GRAFANA COLOR STANDARDIZATION ---
+    logger.level("TRACE", color="<fg #56B4E9>")
+    logger.level("DEBUG", color="<fg #3274D9>")
+    logger.level("INFO", color="<fg #73BF69>")
+    logger.level("SUCCESS", color="<fg #AEEA00>")
+    logger.level("WARNING", color="<fg #F2CC0C>")
+    logger.level("ERROR", color="<fg #E02F44>")
+    logger.level("CRITICAL", color="<fg #A352CC>")
+    # ---------------------------------------
+
     logger.add(
         sys.stdout,
         serialize=True if settings.ENVIRONMENT == "production" else False,
@@ -78,30 +112,9 @@ def setup_logging() -> None:
     )
 
     # Intercept default logging to loguru
-    class InterceptHandler(logging.Handler):
-        def emit(self, record: logging.LogRecord) -> None:
-            # Get corresponding Loguru level if it exists.
-            try:
-                level: str | int = logger.level(record.levelname).name
-            except ValueError:
-                level = record.levelno
-
-            depth = 2
-            try:
-                frame = sys._getframe(depth)
-                while frame and frame.f_code.co_filename == logging.__file__:
-                    frame = cast(Any, frame.f_back)
-                    depth += 1
-            except ValueError:
-                pass
-
-            logger.opt(depth=depth, exception=record.exc_info).log(
-                level, record.getMessage()
-            )
-
     logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
 
-    for name in ["uvicorn", "uvicorn.error"]:
+    for name in ["uvicorn", "uvicorn.error", "uvicorn.access"]:
         u_logger = logging.getLogger(name)
         u_logger.handlers = [InterceptHandler()]
         u_logger.propagate = False
