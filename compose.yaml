@@ -1,5 +1,4 @@
 services:
-
   app:
     hostname: app
     container_name: app
@@ -15,6 +14,10 @@ services:
         condition: service_healthy
     networks:
       - fastapi_demo_net
+    logging:
+      driver: "json-file"
+      options:
+        tag: "{{.Name}}"
 
   db:
     image: postgres:18.1
@@ -33,7 +36,7 @@ services:
     networks:
       - fastapi_demo_net
     healthcheck:
-      test: [ "CMD", "pg_isready" ]
+      test: ["CMD", "pg_isready"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -48,6 +51,34 @@ services:
     environment:
       - ADMINER_DEFAULT_SERVER=postgres_db
       - ADMINER_DESIGN=hever
+    networks:
+      - fastapi_demo_net
+
+  loki:
+    image: grafana/loki:3.7.1
+    container_name: loki
+    ports:
+      - 3100:3100
+    networks:
+      - fastapi_demo_net
+
+  promtail:
+    image: grafana/promtail:3.6.8
+    user: root
+    container_name: promtail
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - fastapi_demo_net
+
+  grafana:
+    image: grafana/grafana:12.4.2
+    container_name: grafana
+    ports:
+      - 3000:3000
     networks:
       - fastapi_demo_net
 
