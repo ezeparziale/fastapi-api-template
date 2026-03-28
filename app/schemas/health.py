@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -8,12 +9,13 @@ class APIStatus(BaseModel):
         description="Represents the environment in which the API is running",
         examples=["local", "staging", "production"],
     )
-    status: str = Field(
-        description="Represents the health status of the API", examples=["Healthy"]
+    status: Literal["healthy", "unhealthy"] = Field(
+        description="Represents the health status of the API",
+        examples=["healthy", "unhealthy"],
     )
-    db_status: str = Field(
+    db_status: Literal["healthy", "unhealthy"] = Field(
         description="Represents the health status of the data base",
-        examples=["Healthy", "Unhealthy"],
+        examples=["healthy", "unhealthy"],
     )
     timestamp: datetime = Field(
         description="Represents the timestamp when the /health response was generated",
