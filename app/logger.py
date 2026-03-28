@@ -4,12 +4,13 @@ import time
 from logging.config import dictConfig
 from typing import Any, cast
 
-from loguru import Record, logger
+import loguru
+from loguru import logger
 
 from app.core.config import settings
 
 
-def success_to_info_patcher(record: Record) -> None:
+def success_to_info_patcher(record: loguru.Record) -> None:
     if record["level"].name == "SUCCESS":
         level_info = logger.level("INFO")
         record["level"].name = "INFO"
