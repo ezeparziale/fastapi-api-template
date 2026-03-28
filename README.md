@@ -204,3 +204,46 @@ alembic downgrade -1
 ```
 
 After creating a revision, you can edit the generated script to define your custom migrations.
+
+## :bar_chart: Monitoring
+
+This project includes a complete observability stack using **Grafana**, **Loki**, and **Promtail**.
+
+### :rocket: Setup
+
+1.  **Start the monitoring stack**:
+    ```bash
+    docker compose up -d grafana loki promtail
+    ```
+
+2.  **Access Grafana**:
+    Open [http://localhost:3000](http://localhost:3000) in your browser.
+    - **Default credentials**: `admin` / `admin`
+
+3.  **Add Loki Data Source**:
+    - Go to **Connections** > **Data sources**.
+    - Click **Add data source** and select **Loki**.
+    - Set the **URL** to: `http://loki:3100`.
+    - Click **Save & test**.
+
+### :level_slider: Create Dashboard with Variables
+
+To visualize logs efficiently, follow these steps to create a dashboard with a level filter:
+
+1.  **Create a New Dashboard**:
+    - Click the **+** icon > **Dashboard**.
+1.  **Add a Variable for Log Level**:
+    - Go to **Dashboard Settings** (gear icon) > **Variables**.
+    - Click **Add variable**.
+    - **Name**: `level`
+    - **Type**: `Custom`
+    - **Custom options (Values separated by comma)**: `TRACE,DEBUG,INFO,SUCCESS,WARNING,ERROR,CRITICAL`
+    - Click **Apply**.
+2.  **Add a Logs Panel**:
+    - Add a new **Visualization**.
+    - Select **Loki** as the data source.
+    - Use the following **LogQL** query:
+      ```logql
+      {container="app"} | json | record_level_name =~ "$level" | line_format "{{.record_message}}"
+      ```
+    - This query filters logs by the `app` container, parses the JSON format, filters by the selected `$level` variable, and cleans up the output message.
