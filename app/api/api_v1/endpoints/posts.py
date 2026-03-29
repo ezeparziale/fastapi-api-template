@@ -1,13 +1,14 @@
 from math import ceil
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, Response, status
+from fastapi.encoders import jsonable_encoder
 from loguru import logger
 from sqlalchemy import delete, desc, func, select, update
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.api.default_responses import default_responses
-from app.api.deps import CurrentUser, FilterParams
+from app.api.deps import CacheDep, CurrentUser, FilterParams
 from app.db.database import get_db
 from app.models import Post, Vote
 from app.schemas import (
@@ -57,20 +58,36 @@ router = APIRouter()
         },
     },
 )
-def get_posts(
+async def get_posts(
     response: Response,
     filter_query: FilterParams,
     _current_user: CurrentUser,
+    cache: CacheDep,
     db: Session = Depends(get_db),
 ) -> list[PostOut]:
     """
     ### Get posts list
     """
-    # Query
+    # 1. Attempt to get from cache using query params in the key
+    cache_key = f"posts:all:{filter_query.model_dump_json()}"
+    cached_data = await cache.get(cache_key)
+
+    if cached_data:
+        # Restore headers from cached metadata
+        response.headers.update(cached_data.get("headers", {}))
+        return cast(list[PostOut], cached_data.get("posts"))
+
+    # 2. Database Query
+    votes_subquery = (
+        select(Vote.post_id, func.count(Vote.post_id).label("votes_count"))
+        .group_by(Vote.post_id)
+        .subquery()
+    )
+
     stmt_select = (
-        select(Post, func.count(Vote.post_id).label("votes"))
-        .join(Vote, Vote.post_id == Post.id, isouter=True)
-        .group_by(Post.id)
+        select(Post, func.coalesce(votes_subquery.c.votes_count, 0).label("votes"))
+        .outerjoin(votes_subquery, Post.id == votes_subquery.c.post_id)
+        .options(joinedload(Post.owner))
     )
 
     # Search
@@ -111,9 +128,19 @@ def get_posts(
     total_rows = db.execute(select(func.count(Post.id))).scalars().one()
 
     # Extra headers
-    response.headers["Total-Count"] = str(total_rows)
-    response.headers["Total-Count-Filtered"] = str(total_row_filtered)
-    response.headers["Pagination-Pages"] = str(ceil(total_rows / filter_query.limit))
+    total_pages = ceil(total_rows / filter_query.limit)
+    headers = {
+        "Total-Count": str(total_rows),
+        "Total-Count-Filtered": str(total_row_filtered),
+        "Pagination-Pages": str(total_pages),
+    }
+    response.headers.update(headers)
+
+    # 3. Save to cache
+    posts_list = [{"Post": row[0], "votes": row[1]} for row in posts]
+    validated_posts = jsonable_encoder([PostOut.model_validate(p) for p in posts_list])
+    cache_payload = {"posts": validated_posts, "headers": headers}
+    await cache.set(cache_key, cache_payload, ex=600)
 
     return posts  # type: ignore[return-value]
 
@@ -129,9 +156,10 @@ def get_posts(
         },
     },
 )
-def create_posts(
+async def create_posts(
     post: Annotated[PostCreateIn, Body(description="Post info")],
     current_user: CurrentUser,
+    cache: CacheDep,
     db: Session = Depends(get_db),
 ) -> NewPostOut:
     """
@@ -142,6 +170,8 @@ def create_posts(
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
+
+    await cache.clear_pattern("posts:all:*")
 
     return new_post  # type: ignore[return-value]
 
@@ -162,19 +192,33 @@ def create_posts(
         },
     },
 )
-def get_post(
+async def get_post(
     id: Annotated[int, Path(description="The ID of the post to get")],
     _current_user: CurrentUser,
+    cache: CacheDep,
     db: Session = Depends(get_db),
 ) -> PostOut:
     """
     ### Get post by id
     """
-    # Get post
+    # 1. Check cache
+    cache_key = f"posts:{id}"
+    cached_post = await cache.get(cache_key)
+    if cached_post:
+        return cast(PostOut, cached_post)
+
+    # 2. Get post from DB
+    votes_subquery = (
+        select(Vote.post_id, func.count(Vote.post_id).label("votes_count"))
+        .where(Vote.post_id == id)
+        .group_by(Vote.post_id)
+        .subquery()
+    )
+
     stmt_select = (
-        select(Post, func.count(Vote.post_id).label("votes"))
-        .join(Vote, Vote.post_id == Post.id, isouter=True)
-        .group_by(Post.id)
+        select(Post, func.coalesce(votes_subquery.c.votes_count, 0).label("votes"))
+        .outerjoin(votes_subquery, Post.id == votes_subquery.c.post_id)
+        .options(joinedload(Post.owner))
         .where(Post.id == id)
         .limit(1)
     )
@@ -185,6 +229,11 @@ def get_post(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
         )
+
+    # 3. Save to cache
+    post_data = {"Post": post[0], "votes": post[1]}
+    validated_data = jsonable_encoder(PostOut.model_validate(post_data))
+    await cache.set(cache_key, validated_data, ex=3600)
 
     return post  # type: ignore[return-value]
 
@@ -213,9 +262,10 @@ def get_post(
         },
     },
 )
-def delete_post(
+async def delete_post(
     id: Annotated[int, Path(description="The ID of the post to delete")],
     current_user: CurrentUser,
+    cache: CacheDep,
     db: Session = Depends(get_db),
 ) -> None:
     """
@@ -248,6 +298,9 @@ def delete_post(
     db.execute(stmt_delete)
     db.commit()
 
+    await cache.delete(f"posts:{id}")
+    await cache.clear_pattern("posts:all:*")
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)  # type: ignore[return-value] # noqa: E501
 
 
@@ -276,10 +329,11 @@ def delete_post(
         },
     },
 )
-def update_post(
+async def update_post(
     id: Annotated[int, Path(description="The ID of the post to update")],
     post: Annotated[PostUpdateIn, Body(description="Post info to update")],
     current_user: CurrentUser,
+    cache: CacheDep,
     db: Session = Depends(get_db),
 ) -> PostUpdateOut:
     """
@@ -313,5 +367,8 @@ def update_post(
     )
     result = db.scalars(stmt_update)
     db.commit()
+
+    await cache.delete(f"posts:{id}")
+    await cache.clear_pattern("posts:all:*")
 
     return result.first()  # type: ignore[return-value]

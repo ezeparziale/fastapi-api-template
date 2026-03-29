@@ -1,12 +1,25 @@
 from typing import Annotated
 
-from fastapi import Depends, Query
+from fastapi import Depends, Query, Request
 from pydantic import BaseModel
 
 from app.core.oauth import get_current_user
 from app.models import User
+from app.services.cache import CacheService
+
+
+async def get_cache_service(request: Request) -> CacheService:
+    """
+    Dependency to provide a CacheService instance.
+    Captures the route template (e.g., /api/v1/posts/{id}) to handle selective caching.
+    """
+    route = request.scope.get("route")
+    route_path = route.path if route else request.url.path
+    return CacheService(endpoint_path=route_path)
+
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+CacheDep = Annotated[CacheService, Depends(get_cache_service)]
 
 
 class CommonFilterParams(BaseModel):

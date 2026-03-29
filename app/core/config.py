@@ -74,6 +74,12 @@ class Settings(BaseSettings):
     # Encryption key for db fields
     ENCRYPTION_KEY: str
 
+    # Cache
+    REDIS_HOSTNAME: str = "redis"
+    REDIS_PORT: int = 6379
+    CACHE_ENABLED: bool = True
+    CACHE_DISABLED_ENDPOINTS: list[str] = []
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

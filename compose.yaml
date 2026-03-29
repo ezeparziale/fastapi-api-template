@@ -54,6 +54,21 @@ services:
     networks:
       - fastapi_demo_net
 
+  redis:
+    image: redis:8.6.1-alpine
+    hostname: redis
+    container_name: redis
+    restart: always
+    ports:
+      - 6379:6379
+    networks:
+      - fastapi_demo_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   loki:
     image: grafana/loki:3.7.1
     container_name: loki
