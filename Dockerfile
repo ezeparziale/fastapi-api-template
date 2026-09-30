@@ -34,6 +34,6 @@ COPY --from=builder /opt/venv /opt/venv
 
 COPY app/ ./app
 
-ENTRYPOINT [ "uvicorn", "app.main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "3000", "--log-level", "info" ]
+ENTRYPOINT [ "uvicorn", "app.main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info" ]
 
 HEALTHCHECK --interval=10s --timeout=5s CMD curl -k --fail http://localhost:3000/health || exit 1
