@@ -1,4 +1,4 @@
-fastapi[all]==0.141.1
+fastapi[all]==0.142.2
 Authlib==1.8.0
 SQLAlchemy==2.0.54
 psycopg[binary]==3.3.6
