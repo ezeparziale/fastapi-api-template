@@ -4,9 +4,6 @@ description = "Fastapi api template"
 readme = "README.md"
 requires-python = ">= 3.14"
 
-[tool.isort]
-profile = "black"
-
 [tool.ruff]
 target-version = "py314"
 
