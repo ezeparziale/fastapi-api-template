@@ -1,7 +1,16 @@
 from math import ceil
 from typing import Annotated, cast
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Path, Response, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Body,
+    Depends,
+    HTTPException,
+    Path,
+    Response,
+    status,
+)
 from fastapi.encoders import jsonable_encoder
 from loguru import logger
 from sqlalchemy import delete, desc, func, select, update
@@ -62,6 +71,7 @@ async def get_posts(
     response: Response,
     filter_query: FilterParams,
     _current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
     cache: CacheDep,
     db: Session = Depends(get_db),
 ) -> list[PostOut]:
@@ -140,7 +150,7 @@ async def get_posts(
     posts_list = [{"Post": row[0], "votes": row[1]} for row in posts]
     validated_posts = jsonable_encoder([PostOut.model_validate(p) for p in posts_list])
     cache_payload = {"posts": validated_posts, "headers": headers}
-    await cache.set(cache_key, cache_payload, ex=600)
+    background_tasks.add_task(cache.set, cache_key, cache_payload, 600)
 
     return posts  # type: ignore[return-value]
 
@@ -159,6 +169,7 @@ async def get_posts(
 async def create_posts(
     post: Annotated[PostCreateIn, Body(description="Post info")],
     current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
     cache: CacheDep,
     db: Session = Depends(get_db),
 ) -> NewPostOut:
@@ -171,7 +182,7 @@ async def create_posts(
     db.commit()
     db.refresh(new_post)
 
-    await cache.clear_pattern("posts:all:*")
+    background_tasks.add_task(cache.clear_pattern, "posts:all:*")
 
     return new_post  # type: ignore[return-value]
 
@@ -195,6 +206,7 @@ async def create_posts(
 async def get_post(
     id: Annotated[int, Path(description="The ID of the post to get")],
     _current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
     cache: CacheDep,
     db: Session = Depends(get_db),
 ) -> PostOut:
@@ -233,7 +245,7 @@ async def get_post(
     # 3. Save to cache
     post_data = {"Post": post[0], "votes": post[1]}
     validated_data = jsonable_encoder(PostOut.model_validate(post_data))
-    await cache.set(cache_key, validated_data, ex=3600)
+    background_tasks.add_task(cache.set, cache_key, validated_data, 3600)
 
     return post  # type: ignore[return-value]
 
@@ -265,6 +277,7 @@ async def get_post(
 async def delete_post(
     id: Annotated[int, Path(description="The ID of the post to delete")],
     current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
     cache: CacheDep,
     db: Session = Depends(get_db),
 ) -> None:
@@ -298,8 +311,8 @@ async def delete_post(
     db.execute(stmt_delete)
     db.commit()
 
-    await cache.delete(f"posts:{id}")
-    await cache.clear_pattern("posts:all:*")
+    background_tasks.add_task(cache.delete, f"posts:{id}")
+    background_tasks.add_task(cache.clear_pattern, "posts:all:*")
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)  # type: ignore[return-value] # noqa: E501
 
@@ -333,6 +346,7 @@ async def update_post(
     id: Annotated[int, Path(description="The ID of the post to update")],
     post: Annotated[PostUpdateIn, Body(description="Post info to update")],
     current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
     cache: CacheDep,
     db: Session = Depends(get_db),
 ) -> PostUpdateOut:
@@ -368,7 +382,7 @@ async def update_post(
     result = db.scalars(stmt_update)
     db.commit()
 
-    await cache.delete(f"posts:{id}")
-    await cache.clear_pattern("posts:all:*")
+    background_tasks.add_task(cache.delete, f"posts:{id}")
+    background_tasks.add_task(cache.clear_pattern, "posts:all:*")
 
     return result.first()  # type: ignore[return-value]
