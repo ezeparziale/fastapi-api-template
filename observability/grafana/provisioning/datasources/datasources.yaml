@@ -1,0 +1,37 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: GET
+      # The OTLP receiver scrapes every 60s and does not take
+      # `global.scrape_interval`, so tell Grafana that is the real cadence.
+      # Otherwise $__rate_interval comes out around 1m, too short to hold two
+      # samples, and every rate() in the dashboards comes back empty.
+      timeInterval: 60s
+
+  - name: Tempo
+    type: tempo
+    uid: tempo
+    access: proxy
+    url: http://tempo:3200
+    editable: false
+    jsonData:
+      httpMethod: GET
+      streamingEnabled:
+        search: true
+
+  - name: Loki
+    type: loki
+    uid: loki
+    access: proxy
+    url: http://loki:3100
+    editable: false
+    jsonData:
+      maxLines: 1000

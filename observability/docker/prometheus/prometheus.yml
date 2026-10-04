@@ -1,0 +1,9 @@
+# The app metrics arrive as OTLP from Alloy, nothing is scraped. This job exists
+# so `up` has a series to report on Prometheus itself.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

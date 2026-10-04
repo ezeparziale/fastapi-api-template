@@ -9,6 +9,10 @@ services:
       - 8000:8000
     env_file:
       - ./.env
+    environment:
+      # .env points at an app running on the host, inside Docker the collector is
+      # reachable by service name.
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
     depends_on:
       db:
         condition: service_healthy
@@ -69,36 +73,113 @@ services:
       timeout: 5s
       retries: 5
 
+  # --- Observability -------------------------------------------------------
+  # Alloy is the only entry point. The app sends traces and metrics over OTLP
+  # and Alloy routes each signal to its store: traces to Tempo, metrics to
+  # Prometheus. Grafana reads both back.
+
+  alloy:
+    image: grafana/alloy:v1.20.1
+    container_name: alloy
+    restart: always
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./observability/docker/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      # Reading the Docker socket is how container stdout reaches Loki. It grants
+      # root equivalent access to the host, which is fine for a local template and
+      # must be replaced by a scoped socket proxy anywhere shared.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      # Alloy UI and its own metrics endpoint.
+      - 12345:12345
+      # OTLP, published so an app running on the host can send telemetry here.
+      - 4317:4317
+      - 4318:4318
+    depends_on:
+      - tempo
+      - prometheus
+      - loki
+    networks:
+      - fastapi_demo_net
+
+  tempo:
+    image: grafana/tempo:3.1.0
+    container_name: tempo
+    restart: always
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./observability/docker/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    ports:
+      - 3200:3200
+    networks:
+      - fastapi_demo_net
+
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    container_name: prometheus
+    restart: always
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      # This is how the app metrics get in: Alloy writes them over OTLP to
+      # /api/v1/otlp, nothing is scraped.
+      - --web.enable-otlp-receiver
+    volumes:
+      - ./observability/docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - 9090:9090
+    networks:
+      - fastapi_demo_net
+
   loki:
-    image: grafana/loki:3.7.1
+    image: grafana/loki:3.7.8
     container_name: loki
+    restart: always
+    command: ["-config.file=/etc/loki/loki-config.yaml"]
+    volumes:
+      - ./observability/docker/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki-data:/loki
     ports:
       - 3100:3100
     networks:
       - fastapi_demo_net
 
-  promtail:
-    image: grafana/promtail:3.6.8
-    user: root
-    container_name: promtail
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - ./promtail-config.yml:/etc/promtail/config.yml
-    command: -config.file=/etc/promtail/config.yml
-    networks:
-      - fastapi_demo_net
-
   grafana:
-    image: grafana/grafana:12.4.2
+    image: grafana/grafana:13.2.3
     container_name: grafana
+    restart: always
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    environment:
+      # Datasources and dashboards are provisioned from file, so there is nothing
+      # to set up by hand and the stack is reproducible.
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_DEFAULT_THEME=dark
     ports:
       - 3000:3000
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
     networks:
       - fastapi_demo_net
 
 volumes:
   postgres-db:
+  tempo-data:
+  prometheus-data:
+  loki-data:
+  grafana-data:
 
 networks:
   fastapi_demo_net:
