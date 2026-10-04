@@ -116,8 +116,10 @@ openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 36
 ## :runner: Run
 
 ```bash
-uvicorn app.main:app --reload --port 8000 --ssl-keyfile key.pem --ssl-certfile cert.pem
+uvicorn app.main:app --reload --port 8000 --env-file .env --ssl-keyfile key.pem --ssl-certfile cert.pem
 ```
+
+`--env-file .env` is what puts `OTEL_*` in the environment, the monitoring stack needs it.
 
 ## :rotating_light: Lint
 
@@ -207,43 +209,94 @@ After creating a revision, you can edit the generated script to define your cust
 
 ## :bar_chart: Monitoring
 
-This project includes a complete observability stack using **Grafana**, **Loki**, and **Promtail**.
+Traces, metrics and logs with **Grafana**, **Tempo**, **Prometheus**, **Loki** and **Alloy**.
+
+FastAPI has OpenTelemetry built in, so the app only needs `OTEL_EXPORTER_OTLP_ENDPOINT`
+in `.env`. It sends OTLP to Alloy, and Alloy routes each signal to its store:
+
+```
+app ──OTLP────> alloy ──traces──> tempo
+   stdout ──> alloy ──metrics─> prometheus
+             └──logs───> loki
+grafana reads tempo + prometheus + loki
+```
 
 ### :rocket: Setup
 
-1.  **Start the monitoring stack**:
-    ```bash
-    docker compose up -d grafana loki promtail
-    ```
+1. **Start the stack**:
 
-2.  **Access Grafana**:
-    Open [http://localhost:3000](http://localhost:3000) in your browser.
-    - **Default credentials**: `admin` / `admin`
+   ```bash
+   docker compose up -d alloy tempo prometheus loki grafana
+   ```
 
-3.  **Add Loki Data Source**:
-    - Go to **Connections** > **Data sources**.
-    - Click **Add data source** and select **Loki**.
-    - Set the **URL** to: `http://loki:3100`.
-    - Click **Save & test**.
+2. **Open Grafana** on [http://localhost:3000](http://localhost:3000) with `admin` / `admin`.
+   The data sources and the dashboards are provisioned automatically.
 
-### :level_slider: Create Dashboard with Variables
+3. **Send some traffic** so there is something to look at:
 
-To visualize logs efficiently, follow these steps to create a dashboard with a level filter:
+   ```bash
+   curl http://localhost:8000/health
+   ```
 
-1.  **Create a New Dashboard**:
-    - Click the **+** icon > **Dashboard**.
-1.  **Add a Variable for Log Level**:
-    - Go to **Dashboard Settings** (gear icon) > **Variables**.
-    - Click **Add variable**.
-    - **Name**: `level`
-    - **Type**: `Custom`
-    - **Custom options (Values separated by comma)**: `TRACE,DEBUG,INFO,SUCCESS,WARNING,ERROR,CRITICAL`
-    - Click **Apply**.
-2.  **Add a Logs Panel**:
-    - Add a new **Visualization**.
-    - Select **Loki** as the data source.
-    - Use the following **LogQL** query:
-      ```logql
-      {container="app"} | json | record_level_name =~ "$level" | line_format "{{.record_message}}"
-      ```
-    - This query filters logs by the `app` container, parses the JSON format, filters by the selected `$level` variable, and cleans up the output message.
+4. **Explore** the provisioned dashboards:
+   - `App Logs`: log lines plus the share of logs per level
+   - `Request Metrics`: throughput, latency percentiles and error rate
+
+   Or query the data sources by hand from Grafana > **Explore**: `Tempo` for
+   traces, `Prometheus` for metrics, `Loki` for logs.
+
+:bar_chart: Useful endpoints:
+
+| Service    | URL                    |
+| ---------- | ---------------------- |
+| Grafana    | http://localhost:3000  |
+| Alloy UI   | http://localhost:12345 |
+| Prometheus | http://localhost:9090  |
+| Tempo      | http://localhost:3200  |
+| Loki       | http://localhost:3100  |
+
+:mag_right: How the dashboards work:
+
+The app writes one JSON object per line (loguru with `serialize=True`), so the
+level is nested at `record.level.name` and the message at `record.message`. The
+logs panel queries use `| json`, and Loki exposes those nested fields flattened
+with underscores, which is where `record_level_name` comes from.
+
+`Request Metrics` is built on `http.server.request.duration`, the histogram
+FastAPI records for every request. Percentiles come from
+`histogram_quantile()` over the buckets, and error rate is the share of `5xx`
+responses. Two details worth knowing:
+
+- Paths that match no route, such as a `404`, carry no `http_route` label, so
+  they are grouped as `unmatched` with `label_replace()`.
+- Both error rate panels read `0%` while healthy instead of showing no data, so
+  a quiet dashboard never looks broken.
+
+:warning: The OTLP receiver in Prometheus scrapes every **60s** and ignores
+`global.scrape_interval`, so the Prometheus data source declares
+`timeInterval: 60s`. That matters because `$__rate_interval` is derived from it:
+at the 15s default it lands near 1m, which is too short to hold two samples, and
+every `rate()` in the dashboards returns nothing. Leave it in sync if you ever
+change the receiver cadence.
+
+:warning: Alloy reads the host Docker socket to collect container logs. It grants
+root equivalent access to the host, fine for local work, and must be replaced by
+a scoped socket proxy anywhere shared.
+
+:hammer_and_wrench: Configuration files:
+
+```
+observability/
+├── docker/
+│   ├── alloy/config.alloy                # OTLP and Docker logs in, traces, metrics and logs out
+│   ├── prometheus/prometheus.yml
+│   ├── tempo/tempo.yaml
+│   └── loki/loki-config.yaml
+└── grafana/
+    ├── dashboards/
+    │   ├── app-logs.json                 # log lines and share per level
+    │   └── request-metrics.json          # throughput, latency percentiles, error rate
+    └── provisioning/
+        ├── dashboards/dashboards.yaml
+        └── datasources/datasources.yaml
+```
