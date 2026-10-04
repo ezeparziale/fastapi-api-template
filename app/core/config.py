@@ -79,6 +79,12 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     CACHE_ENABLED: bool = True
     CACHE_DISABLED_ENDPOINTS: list[str] = []
+    # The cache is an optimization, never a correctness dependency: fail fast.
+    CACHE_CONNECT_TIMEOUT: float = 0.25
+    CACHE_TIMEOUT: float = 0.5
+    # Circuit breaker: stop paying the timeout while Redis is unreachable.
+    CACHE_FAILURE_THRESHOLD: int = 5
+    CACHE_RESET_TIMEOUT: float = 30.0
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
