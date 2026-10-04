@@ -5,7 +5,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.api.default_responses import default_responses
-from app.api.deps import CurrentUser
+from app.api.deps import CacheDep, CurrentUser
 from app.db.database import get_db
 from app.models import Post, Vote
 from app.schemas import Message, MessageDetail
@@ -58,9 +58,10 @@ router = APIRouter()
         },
     },
 )
-def vote_post(
+async def vote_post(
     vote: VoteSchema,
     current_user: CurrentUser,
+    cache: CacheDep,
     db: Session = Depends(get_db),
 ) -> Any:
     """
@@ -96,6 +97,10 @@ def vote_post(
         db.add(new_vote)
         db.commit()
 
+        # The vote count is baked into the cached post and posts list
+        await cache.delete(f"posts:{vote.post_id}")
+        await cache.clear_pattern("posts:all:*")
+
         return {"message": "Successfully added vote"}
     else:
         if not found_vote:
@@ -111,6 +116,10 @@ def vote_post(
         )
         db.execute(stmt_delete_vote)
         db.commit()
+
+        # The vote count is baked into the cached post and posts list
+        await cache.delete(f"posts:{vote.post_id}")
+        await cache.clear_pattern("posts:all:*")
 
         raise HTTPException(
             status_code=status.HTTP_204_NO_CONTENT,
