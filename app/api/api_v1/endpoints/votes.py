@@ -1,6 +1,13 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Response,
+    status,
+)
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
@@ -61,6 +68,7 @@ router = APIRouter()
 async def vote_post(
     vote: VoteSchema,
     current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
     cache: CacheDep,
     db: Session = Depends(get_db),
 ) -> Any:
@@ -98,8 +106,8 @@ async def vote_post(
         db.commit()
 
         # The vote count is baked into the cached post and posts list
-        await cache.delete(f"posts:{vote.post_id}")
-        await cache.clear_pattern("posts:all:*")
+        background_tasks.add_task(cache.delete, f"posts:{vote.post_id}")
+        background_tasks.add_task(cache.clear_pattern, "posts:all:*")
 
         return {"message": "Successfully added vote"}
     else:
@@ -118,9 +126,10 @@ async def vote_post(
         db.commit()
 
         # The vote count is baked into the cached post and posts list
-        await cache.delete(f"posts:{vote.post_id}")
-        await cache.clear_pattern("posts:all:*")
+        background_tasks.add_task(cache.delete, f"posts:{vote.post_id}")
+        background_tasks.add_task(cache.clear_pattern, "posts:all:*")
 
-        raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
-        )
+        # Must return a Response instead of raising: FastAPI only attaches the
+        # background tasks to responses built by the normal return path, so a
+        # raised HTTPException would silently drop the invalidation above.
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
