@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from loguru import logger
 from starlette.middleware.cors import CORSMiddleware
@@ -41,7 +41,10 @@ app.add_middleware(ProcessTimeHeaderMiddleware)
 
 
 @app.exception_handler(500)
-async def handle_500_errors(exc: Exception) -> JSONResponse:
+async def handle_500_errors(
+    request: Request,  # noqa: ARG001
+    exc: Exception,
+) -> JSONResponse:
     logger.error(f"Error: {exc}")
     return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
