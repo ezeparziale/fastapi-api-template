@@ -25,7 +25,7 @@ repos:
     hooks:
       - id: mypy
         name: mypy
-        entry: mypy app
+        entry: env/bin/mypy app
         language: system
         types: [python]
         pass_filenames: false
