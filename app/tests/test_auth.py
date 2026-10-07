@@ -1,8 +1,8 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from authlib.jose import jwt
 from fastapi.testclient import TestClient
+from joserfc import jwk, jwt
 
 from app.core.config import settings
 from app.models import User
@@ -25,9 +25,13 @@ def test_login(client: TestClient, test_user: User) -> None:
     assert login_res.token_type == "bearer"
 
     # And: the token payload should contain the correct user ID
-    payload = jwt.decode(login_res.access_token, settings.SECRET_KEY)
-    user_id = payload.get("sub")
-    assert user_id == test_user.id
+    key = jwk.import_key(data=settings.SECRET_KEY, key_type="oct")
+    payload = jwt.decode(
+        value=login_res.access_token, key=key, algorithms=[settings.ALGORITHM]
+    )
+    user_id = payload.claims.get("sub")
+    assert user_id is not None
+    assert int(user_id) == test_user.id
 
 
 # Test: Login with incorrect credentials or missing fields should fail
@@ -98,8 +102,13 @@ def test_google_auth_callback_success(client: TestClient, test_user: User) -> No
         assert response.status_code == 200
         login_res = Token(**response.json())
         assert login_res.token_type == "bearer"
-        payload = jwt.decode(login_res.access_token, settings.SECRET_KEY)
-        assert payload.get("sub") == test_user.id
+        key = jwk.import_key(data=settings.SECRET_KEY, key_type="oct")
+        payload = jwt.decode(
+            value=login_res.access_token, key=key, algorithms=[settings.ALGORITHM]
+        )
+        sub = payload.claims.get("sub")
+        assert sub is not None
+        assert int(sub) == test_user.id
         mock_authorize.assert_awaited_once()
 
 

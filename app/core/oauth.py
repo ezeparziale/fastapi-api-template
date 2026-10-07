@@ -1,11 +1,12 @@
 from datetime import UTC, datetime, timedelta
-from typing import Annotated, Any, cast
+from typing import Annotated, Any
 
 from authlib.integrations.starlette_client import OAuth
-from authlib.jose import jwt as jwt
-from authlib.jose.errors import JoseError as JoseError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from joserfc import jwk, jwt
+from joserfc.errors import JoseError as JoseError
+from joserfc.jwt import JWTClaimsRegistry
 from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -36,10 +37,10 @@ def create_access_token(data: dict[str, Any]) -> str:
     to_encode = data.copy()
     expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
-        payload=to_encode, key=SECRET_KEY, header={"alg": ALGORITHM}
-    )
-    return cast(bytes, encoded_jwt).decode("utf-8")
+    if "sub" in to_encode:
+        to_encode["sub"] = str(to_encode["sub"])
+    key = jwk.import_key(data=SECRET_KEY, key_type="oct")
+    return jwt.encode(claims=to_encode, key=key, header={"alg": ALGORITHM})
 
 
 def get_current_user(
@@ -51,13 +52,14 @@ def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY)
-        payload.validate()
-        sub: int | None = payload.get("sub", None)
+        key = jwk.import_key(data=SECRET_KEY, key_type="oct")
+        payload = jwt.decode(value=token, key=key, algorithms=[ALGORITHM])
+        JWTClaimsRegistry(leeway=0).validate(payload.claims)
+        sub = payload.claims.get("sub")
         if sub is None:
             raise credentials_exception
-        token_data = TokenData(id=sub)
-    except (JoseError, ValidationError) as exc:
+        token_data = TokenData(id=int(sub))
+    except (JoseError, ValidationError, ValueError) as exc:
         raise credentials_exception from exc
 
     stmt_select = select(User).where(User.id == token_data.id)
