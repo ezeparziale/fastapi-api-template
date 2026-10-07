@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -46,8 +47,10 @@ class NewPostOut(PostBase):
     owner: UserOut
 
 
-class PostOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    Post: NewPostOut
+class PostOut(NewPostOut):
     votes: int = Field(title="Count of votes", examples=["1"])
+
+    @classmethod
+    def from_post(cls, post_obj: Any, votes: int) -> PostOut:
+        base = NewPostOut.model_validate(post_obj, from_attributes=True)
+        return cls(**base.model_dump(), votes=votes)

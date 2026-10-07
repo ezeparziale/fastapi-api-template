@@ -64,7 +64,7 @@ def test_get_posts_search(
     assert res.status_code == 200
     data = res.json()
     logging.debug(data)
-    assert data[0]["Post"]["title"] == test_posts[0].title
+    assert data[0]["title"] == test_posts[0].title
 
 
 # Test: Search posts with no matching results should return empty list
@@ -108,7 +108,7 @@ def test_get_one_post(authorized_client: TestClient, test_posts: list[Post]) -> 
     logging.debug(res.json())
     post = PostOut(**res.json())
     logging.debug(post)
-    assert post.Post.id == test_posts[0].id
+    assert post.id == test_posts[0].id
     assert res.status_code == 200
 
 

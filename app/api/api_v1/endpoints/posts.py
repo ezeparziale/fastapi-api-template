@@ -147,12 +147,12 @@ async def get_posts(
     response.headers.update(headers)
 
     # 3. Save to cache
-    posts_list = [{"Post": row[0], "votes": row[1]} for row in posts]
-    validated_posts = jsonable_encoder([PostOut.model_validate(p) for p in posts_list])
+    posts_out = [PostOut.from_post(row[0], row[1]) for row in posts]
+    validated_posts = jsonable_encoder(posts_out)
     cache_payload = {"posts": validated_posts, "headers": headers}
     background_tasks.add_task(cache.set, cache_key, cache_payload, 600)
 
-    return posts  # type: ignore[return-value]
+    return posts_out
 
 
 @router.post(
@@ -243,11 +243,11 @@ async def get_post(
         )
 
     # 3. Save to cache
-    post_data = {"Post": post[0], "votes": post[1]}
-    validated_data = jsonable_encoder(PostOut.model_validate(post_data))
+    post_out = PostOut.from_post(post[0], post[1])
+    validated_data = jsonable_encoder(post_out)
     background_tasks.add_task(cache.set, cache_key, validated_data, 3600)
 
-    return post  # type: ignore[return-value]
+    return post_out
 
 
 @router.delete(
