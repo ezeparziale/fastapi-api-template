@@ -5,8 +5,8 @@ from .post import (
     PostBase,
     PostCreateIn,
     PostOut,
+    PostPatchIn,
     PostUpdateIn,
-    PostUpdateOut,
 )
 from .token import Token, TokenData
 from .user import UserCreate, UserCreditCardIn, UserCreditCardOut, UserOut
@@ -20,8 +20,8 @@ __all__ = [
     "PostBase",
     "PostCreateIn",
     "PostOut",
+    "PostPatchIn",
     "PostUpdateIn",
-    "PostUpdateOut",
     "Token",
     "TokenData",
     "UserCreate",

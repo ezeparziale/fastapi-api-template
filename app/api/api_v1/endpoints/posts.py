@@ -25,11 +25,36 @@ from app.schemas import (
     NewPostOut,
     PostCreateIn,
     PostOut,
+    PostPatchIn,
     PostUpdateIn,
-    PostUpdateOut,
 )
 
 router = APIRouter()
+
+
+def _load_post_out(db: Session, post_id: int) -> PostOut:
+    votes_subquery = (
+        select(Vote.post_id, func.count(Vote.post_id).label("votes_count"))
+        .where(Vote.post_id == post_id)
+        .group_by(Vote.post_id)
+        .subquery()
+    )
+
+    stmt_select = (
+        select(Post, func.coalesce(votes_subquery.c.votes_count, 0).label("votes"))
+        .outerjoin(votes_subquery, Post.id == votes_subquery.c.post_id)
+        .options(joinedload(Post.owner))
+        .where(Post.id == post_id)
+        .limit(1)
+    )
+    row = db.execute(stmt_select).first()
+
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
+        )
+
+    return PostOut.from_post(row[0], row[1])
 
 
 @router.get(
@@ -220,30 +245,9 @@ async def get_post(
         return cast(PostOut, cached_post)
 
     # 2. Get post from DB
-    votes_subquery = (
-        select(Vote.post_id, func.count(Vote.post_id).label("votes_count"))
-        .where(Vote.post_id == id)
-        .group_by(Vote.post_id)
-        .subquery()
-    )
-
-    stmt_select = (
-        select(Post, func.coalesce(votes_subquery.c.votes_count, 0).label("votes"))
-        .outerjoin(votes_subquery, Post.id == votes_subquery.c.post_id)
-        .options(joinedload(Post.owner))
-        .where(Post.id == id)
-        .limit(1)
-    )
-    post = db.execute(stmt_select).first()
-
-    # Check if post exists
-    if not post:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
-        )
+    post_out = _load_post_out(db, id)
 
     # 3. Save to cache
-    post_out = PostOut.from_post(post[0], post[1])
     validated_data = jsonable_encoder(post_out)
     background_tasks.add_task(cache.set, cache_key, validated_data, 3600)
 
@@ -324,7 +328,7 @@ async def delete_post(
         **default_responses,
         200: {
             "description": "Post updated",
-            "model": PostUpdateOut,
+            "model": PostOut,
         },
         403: {
             "description": "Forbidden",
@@ -349,7 +353,7 @@ async def update_post(
     background_tasks: BackgroundTasks,
     cache: CacheDep,
     db: Session = Depends(get_db),
-) -> PostUpdateOut:
+) -> PostOut:
     """
     ### Update post
     """
@@ -377,12 +381,96 @@ async def update_post(
         .where(Post.id == id)
         .values(post.model_dump())
         .execution_options(synchronize_session=False)
-        .returning(Post)
     )
-    result = db.scalars(stmt_update)
+    db.execute(stmt_update)
     db.commit()
 
     background_tasks.add_task(cache.delete, f"posts:{id}")
     background_tasks.add_task(cache.clear_pattern, "posts:all:*")
 
-    return result.first()  # type: ignore[return-value]
+    return _load_post_out(db, id)
+
+
+@router.patch(
+    "/{id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        **default_responses,
+        200: {
+            "description": "Post updated",
+            "model": PostOut,
+        },
+        400: {
+            "description": "Bad request",
+            "model": MessageDetail,
+            "content": {
+                "application/json": {"example": {"detail": "No fields to update"}}
+            },
+        },
+        403: {
+            "description": "Forbidden",
+            "model": MessageDetail,
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Not authorized to perform requested action"}
+                }
+            },
+        },
+        404: {
+            "description": "Post not found",
+            "model": MessageDetail,
+            "content": {"application/json": {"example": {"detail": "Post not found"}}},
+        },
+    },
+)
+async def patch_post(
+    id: Annotated[int, Path(description="The ID of the post to patch")],
+    post: Annotated[PostPatchIn, Body(description="Post fields to update")],
+    current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
+    cache: CacheDep,
+    db: Session = Depends(get_db),
+) -> PostOut:
+    """
+    ### Partially update post
+
+    Only the fields present in the body are updated.
+    """
+    values = post.model_dump(exclude_none=True)
+    if not values:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No fields to update"
+        )
+
+    # Get post
+    stmt_select = select(Post).where(Post.id == id).limit(1)
+    post_to_update = db.execute(stmt_select).scalars().first()
+
+    # Check if post exists
+    if post_to_update is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found",
+        )
+
+    # Check if user is owner of the post
+    if post_to_update.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to perform requested action",
+        )
+
+    # Update post in db
+    stmt_update = (
+        update(Post)
+        .where(Post.id == id)
+        .values(values)
+        .execution_options(synchronize_session=False)
+    )
+    db.execute(stmt_update)
+    db.commit()
+
+    background_tasks.add_task(cache.delete, f"posts:{id}")
+    background_tasks.add_task(cache.clear_pattern, "posts:all:*")
+
+    return _load_post_out(db, id)

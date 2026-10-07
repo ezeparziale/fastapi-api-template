@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.models import Post, User
-from app.schemas import NewPostOut, PostOut, PostUpdateOut
+from app.schemas import NewPostOut, PostOut
 
 
 # Test: Get all posts should return 200 and the correct number of posts
@@ -197,15 +197,20 @@ def test_delete_other_user_post(
 
 
 # Test: Update a post successfully should return 200 and updated data
-def test_update_post(authorized_client: TestClient, test_posts: list[Post]) -> None:
+def test_update_post(
+    authorized_client: TestClient, test_user: User, test_posts: list[Post]
+) -> None:
     data = {"title": "new title", "content": "new content", "id": test_posts[0].id}
     res = authorized_client.put(f"/api/v1/posts/{test_posts[0].id}", json=data)
     logging.debug(res)
-    updated_post = PostUpdateOut(**res.json())
+    updated_post = PostOut(**res.json())
     logging.debug(updated_post)
     assert res.status_code == 200
     assert updated_post.title == data["title"]
     assert updated_post.content == data["content"]
+    assert updated_post.id == test_posts[0].id
+    assert updated_post.owner.id == test_user.id
+    assert updated_post.votes == 0
 
 
 # Test: User should not be able to update another user's post (should return 403)
@@ -232,4 +237,69 @@ def test_update_post_non_exists(
     data = {"title": "new title", "content": "new content", "id": test_posts[2].id}
     res = authorized_client.put("/api/v1/posts/999999999", json=data)
     logging.debug(res)
+    assert res.status_code == 404
+
+
+# Test: Patch a post with a single field should update only that field
+@pytest.mark.parametrize(
+    "field, value",
+    [
+        ("title", "patched title"),
+        ("content", "patched content"),
+        ("published", False),
+    ],
+)
+def test_patch_post_single_field(
+    authorized_client: TestClient,
+    test_user: User,
+    test_posts: list[Post],
+    field: str,
+    value: str | bool,
+) -> None:
+    original = test_posts[0]
+    res = authorized_client.patch(f"/api/v1/posts/{original.id}", json={field: value})
+    logging.debug(res.json())
+    assert res.status_code == 200
+    patched = PostOut(**res.json())
+    assert getattr(patched, field) == value
+    for other in ("title", "content", "published"):
+        if other != field:
+            assert getattr(patched, other) == getattr(original, other)
+    assert patched.id == original.id
+    assert patched.owner.id == test_user.id
+    assert patched.votes == 0
+
+
+# Test: Patch a post with an empty body should return 400
+def test_patch_post_empty_body(
+    authorized_client: TestClient, test_posts: list[Post]
+) -> None:
+    res = authorized_client.patch(f"/api/v1/posts/{test_posts[0].id}", json={})
+    logging.debug(res.json())
+    assert res.status_code == 400
+    assert res.json()["detail"] == "No fields to update"
+
+
+# Test: Unauthorized user should not be able to patch a post
+def test_patch_post_unauthorized(client: TestClient, test_posts: list[Post]) -> None:
+    res = client.patch(f"/api/v1/posts/{test_posts[0].id}", json={"title": "x"})
+    logging.debug(res.json())
+    assert res.status_code == 401
+
+
+# Test: User should not be able to patch another user's post (should return 403)
+def test_patch_other_user_post(
+    authorized_client: TestClient, test_posts: list[Post]
+) -> None:
+    res = authorized_client.patch(
+        f"/api/v1/posts/{test_posts[2].id}", json={"title": "x"}
+    )
+    logging.debug(res.json())
+    assert res.status_code == 403
+
+
+# Test: Patch a non-existent post should return 404
+def test_patch_post_non_exists(authorized_client: TestClient) -> None:
+    res = authorized_client.patch("/api/v1/posts/999999999", json={"title": "x"})
+    logging.debug(res.json())
     assert res.status_code == 404

@@ -25,8 +25,17 @@ class PostUpdateIn(PostBase):
     pass
 
 
-class PostUpdateOut(PostBase):
-    model_config = ConfigDict(from_attributes=True)
+class PostPatchIn(BaseModel):
+    title: str | None = Field(None, title="Title of post", examples=["My post title"])
+    content: str | None = Field(
+        None, title="Content of post", examples=["My post content"]
+    )
+    published: bool | None = Field(
+        None,
+        title="Published",
+        description="Specifies whether the post has been published or not",
+        examples=[True],
+    )
 
 
 class NewPostOut(PostBase):
