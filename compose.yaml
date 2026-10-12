@@ -118,6 +118,9 @@ services:
       - 3200:3200
     networks:
       - fastapi_demo_net
+    depends_on:
+      # The metrics-generator remote-writes derived metrics here.
+      - prometheus
 
   prometheus:
     image: prom/prometheus:v3.15.0
@@ -130,6 +133,9 @@ services:
       # This is how the app metrics get in: Alloy writes them over OTLP to
       # /api/v1/otlp, nothing is scraped.
       - --web.enable-otlp-receiver
+      # Tempo's metrics-generator remote-writes the derived span and
+      # service-graph metrics to /api/v1/write, opened by this flag.
+      - --web.enable-remote-write-receiver
     volumes:
       - ./observability/docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus

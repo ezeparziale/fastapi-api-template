@@ -26,6 +26,30 @@ datasources:
       httpMethod: GET
       streamingEnabled:
         search: true
+        # TraceQL metrics queries stream as they compute, used by the APM view.
+        metrics: true
+      # Renders the Service Graph node graph from the traces_service_graph_*
+      # series the Tempo metrics-generator remote-writes into Prometheus.
+      serviceMap:
+        datasourceUid: prometheus
+      nodeGraph:
+        enabled: true
+      # Click through from a span to its span metrics in Prometheus.
+      # `$$` escapes the provisioning env-var expansion, so `${__tags}` and
+      # `$__rate_interval` reach Grafana as query variables instead of being
+      # replaced by (empty) environment variables.
+      tracesToMetrics:
+        datasourceUid: prometheus
+        spanStartTimeShift: -5m
+        spanEndTimeShift: 5m
+        tags:
+          - key: service.name
+            value: service
+        queries:
+          - name: Requests/s
+            query: sum(rate(traces_spanmetrics_calls_total{$${__tags}}[$$__rate_interval]))
+          - name: Latency p95
+            query: histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_latency_bucket{$${__tags}}[$$__rate_interval])))
 
   - name: Loki
     type: loki

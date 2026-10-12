@@ -22,5 +22,31 @@ storage:
     local:
       path: /var/tempo/blocks
 
+# Derives RED metrics from spans (span-metrics) and the service-to-service graph
+# (service-graphs), then remote-writes them to Prometheus. In single-binary mode
+# the distributor feeds the generator in-process, no Kafka needed. Grafana reads
+# the `traces_spanmetrics_*` and `traces_service_graph_*` series back from
+# Prometheus, which is what the APM dashboard renders.
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      cluster: docker
+  storage:
+    path: /var/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        # Lets the generated series carry span exemplars, so a latency spike on
+        # the dashboard links straight to the trace that caused it.
+        send_exemplars: true
+
+# Processors are off by default; this turns them on for the default tenant.
+overrides:
+  defaults:
+    metrics_generator:
+      processors:
+        - service-graphs
+        - span-metrics
+
 usage_report:
   reporting_enabled: false
