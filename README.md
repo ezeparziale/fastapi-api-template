@@ -239,6 +239,8 @@ grafana reads tempo + prometheus + loki
    ```
 
 4. **Explore** the provisioned dashboards:
+   - `Overview / Golden Signals`: traffic, errors, latency and saturation, the
+     entry point
    - `App Logs`: log lines plus the share of logs per level
    - `Request Metrics`: throughput, latency percentiles and error rate
    - `APM / Service Overview`: service graph, span RED metrics and recent traces
@@ -272,6 +274,14 @@ responses. Two details worth knowing:
   they are grouped as `unmatched` with `label_replace()`.
 - Both error rate panels read `0%` while healthy instead of showing no data, so
   a quiet dashboard never looks broken.
+
+`Overview / Golden Signals` is the single pane over the four signals. Traffic,
+errors and latency come from `http.server.request.duration` and saturation from
+`http.server.active_requests`, the in-flight request gauge FastAPI exports. The
+bottom row repeats the golden signals from the trace side
+(`traces_spanmetrics_*`) so both pipelines are visible side by side, and the
+dashboard header links through to `Request Metrics` and `APM / Service Overview`
+for the drill-down.
 
 `APM / Service Overview` is built on the metrics the **Tempo metrics-generator**
 derives from the traces, not on the app's own HTTP histogram. The generator is
@@ -316,6 +326,7 @@ observability/
 │   └── loki/loki-config.yaml
 └── grafana/
     ├── dashboards/
+    │   ├── golden-signals-overview.json  # traffic, errors, latency, saturation
     │   ├── app-logs.json                 # log lines and share per level
     │   ├── request-metrics.json          # throughput, latency percentiles, error rate
     │   └── apm-service-overview.json     # service graph, span RED metrics, traces
