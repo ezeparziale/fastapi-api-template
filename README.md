@@ -215,7 +215,7 @@ FastAPI has OpenTelemetry built in, so the app only needs `OTEL_EXPORTER_OTLP_EN
 in `.env`. It sends OTLP to Alloy, and Alloy routes each signal to its store:
 
 ```
-app ──OTLP────> alloy ──traces──> tempo
+app ──OTLP────> alloy ──traces──> tempo ──remote_write (span + service graph metrics)──> prometheus
    stdout ──> alloy ──metrics─> prometheus
              └──logs───> loki
 grafana reads tempo + prometheus + loki
@@ -241,6 +241,7 @@ grafana reads tempo + prometheus + loki
 4. **Explore** the provisioned dashboards:
    - `App Logs`: log lines plus the share of logs per level
    - `Request Metrics`: throughput, latency percentiles and error rate
+   - `APM / Service Overview`: service graph, span RED metrics and recent traces
 
    Or query the data sources by hand from Grafana > **Explore**: `Tempo` for
    traces, `Prometheus` for metrics, `Loki` for logs.
@@ -272,6 +273,27 @@ responses. Two details worth knowing:
 - Both error rate panels read `0%` while healthy instead of showing no data, so
   a quiet dashboard never looks broken.
 
+`APM / Service Overview` is built on the metrics the **Tempo metrics-generator**
+derives from the traces, not on the app's own HTTP histogram. The generator is
+enabled in `tempo/tempo.yaml` (the `metrics_generator` block plus the
+`overrides.defaults.metrics_generator.processors` list) and remote-writes two
+families of series back into Prometheus:
+
+- `traces_spanmetrics_*` — RED metrics per span (`calls_total`,
+  `latency_bucket`, `size_total`), labeled by `service`, `span_name`,
+  `span_kind` and `status_code`.
+- `traces_service_graph_*` — per-edge request counts, failures and durations
+  between a `client` and a `server`, which draw the node graph.
+
+Two things are worth knowing:
+
+- The **Service Graph** panel is a Tempo query (`queryType: serviceMap`), not a
+  PromQL panel. It resolves the `traces_service_graph_*` series through the
+  Prometheus data source linked under `serviceMap` in the Tempo data source.
+- Prometheus needs `--web.enable-remote-write-receiver` for the generator to
+  push into it; without that flag the generator logs remote-write failures and
+  the dashboard stays empty.
+
 :warning: The OTLP receiver in Prometheus scrapes every **60s** and ignores
 `global.scrape_interval`, so the Prometheus data source declares
 `timeInterval: 60s`. That matters because `$__rate_interval` is derived from it:
@@ -290,12 +312,13 @@ observability/
 ├── docker/
 │   ├── alloy/config.alloy                # OTLP and Docker logs in, traces, metrics and logs out
 │   ├── prometheus/prometheus.yml
-│   ├── tempo/tempo.yaml
+│   ├── tempo/tempo.yaml                  # storage + metrics-generator (span metrics, service graph)
 │   └── loki/loki-config.yaml
 └── grafana/
     ├── dashboards/
     │   ├── app-logs.json                 # log lines and share per level
-    │   └── request-metrics.json          # throughput, latency percentiles, error rate
+    │   ├── request-metrics.json          # throughput, latency percentiles, error rate
+    │   └── apm-service-overview.json     # service graph, span RED metrics, traces
     └── provisioning/
         ├── dashboards/dashboards.yaml
         └── datasources/datasources.yaml
