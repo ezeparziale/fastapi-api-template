@@ -1,7 +1,7 @@
 
 -r requirements.txt
 
-ruff==0.16.6
+ruff==0.16.10
 pytest==9.1.1
 mypy==2.4.0
 coverage[toml]==7.16.2
