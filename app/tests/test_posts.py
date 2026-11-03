@@ -4,8 +4,18 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from app.api.deps import get_cache_service
+from app.main import app
 from app.models import Post, User
 from app.schemas import NewPostOut, PostOut
+
+
+class FakeCache:
+    def __init__(self, get_value: Any = None) -> None:
+        self.get_value = get_value
+
+    async def get(self, key: str) -> Any:
+        return self.get_value
 
 
 # Test: Get all posts should return 200 and the correct number of posts
@@ -303,3 +313,32 @@ def test_patch_post_non_exists(authorized_client: TestClient) -> None:
     res = authorized_client.patch("/api/v1/posts/999999999", json={"title": "x"})
     logging.debug(res.json())
     assert res.status_code == 404
+
+
+def test_get_all_posts_returns_cached_payload(authorized_client: TestClient) -> None:
+    cached = {"headers": {"X-Cache": "HIT"}, "posts": []}
+    app.dependency_overrides[get_cache_service] = lambda: FakeCache(cached)
+    try:
+        res = authorized_client.get("/api/v1/posts/")
+    finally:
+        app.dependency_overrides.pop(get_cache_service, None)
+
+    assert res.status_code == 200
+    assert res.json() == []
+    assert res.headers["x-cache"] == "HIT"
+
+
+def test_get_one_post_returns_cached_payload(
+    authorized_client: TestClient, test_posts: list[Post]
+) -> None:
+    url = f"/api/v1/posts/{test_posts[0].id}"
+    cached = authorized_client.get(url).json()
+
+    app.dependency_overrides[get_cache_service] = lambda: FakeCache(cached)
+    try:
+        res = authorized_client.get(url)
+    finally:
+        app.dependency_overrides.pop(get_cache_service, None)
+
+    assert res.status_code == 200
+    assert res.json() == cached
