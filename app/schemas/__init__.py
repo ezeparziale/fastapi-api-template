@@ -1,4 +1,4 @@
-from .health import APIStatus
+from .health import APIStatusOut
 from .helpers import Message, MessageDetail
 from .post import (
     NewPostOut,
@@ -13,7 +13,7 @@ from .user import UserCreate, UserCreditCardIn, UserCreditCardOut, UserOut
 from .vote import Vote
 
 __all__ = [
-    "APIStatus",
+    "APIStatusOut",
     "Message",
     "MessageDetail",
     "NewPostOut",

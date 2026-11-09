@@ -4,7 +4,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
-class APIStatus(BaseModel):
+class APIStatusOut(BaseModel):
     environment: str = Field(
         description="Represents the environment in which the API is running",
         examples=["local", "staging", "production"],

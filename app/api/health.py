@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.db.database import get_db
-from app.schemas import APIStatus
+from app.schemas import APIStatusOut
 
 router = APIRouter()
 
@@ -16,22 +16,22 @@ router = APIRouter()
 @router.get(
     "/health",
     status_code=status.HTTP_200_OK,
-    response_model=APIStatus,
+    response_model=APIStatusOut,
     responses={
         200: {
             "description": "API is healthy",
-            "model": APIStatus,
+            "model": APIStatusOut,
         },
         503: {
             "description": "API is unhealthy or some services are down",
-            "model": APIStatus,
+            "model": APIStatusOut,
         },
     },
 )
 def health_api(
     response: Response,
     db: Session = Depends(get_db),
-) -> APIStatus:
+) -> APIStatusOut:
     """
     ### Get api health
     """
@@ -50,7 +50,7 @@ def health_api(
         api_status = "unhealthy"
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
 
-    resp = APIStatus(
+    resp = APIStatusOut(
         environment=settings.ENVIRONMENT,
         status=api_status,
         db_status=db_status,

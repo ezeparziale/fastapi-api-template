@@ -2,15 +2,15 @@ import logging
 
 from fastapi.testclient import TestClient
 
-from app.schemas import APIStatus
+from app.schemas import APIStatusOut
 
 
-# Test: /health endpoint should return 200 and valid APIStatus when healthy
+# Test: /health endpoint should return 200 and valid APIStatusOut when healthy
 def test_api_health(client: TestClient) -> None:
     res = client.get("/health")
 
     data = res.json()
-    APIStatus(**data)
+    APIStatusOut(**data)
     logging.debug(data)
 
     assert res.status_code == 200
@@ -23,7 +23,7 @@ def test_api_health_db_error(client_with_db_error: TestClient) -> None:
     res = client_with_db_error.get("/health")
 
     data = res.json()
-    APIStatus(**data)
+    APIStatusOut(**data)
     logging.debug(data)
 
     assert res.status_code == 503
