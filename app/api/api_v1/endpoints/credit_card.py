@@ -14,6 +14,7 @@ router = APIRouter()
 @router.get(
     "/",
     status_code=status.HTTP_200_OK,
+    response_model=UserCreditCardOut,
     responses={
         **default_responses,
         200: {
@@ -50,6 +51,7 @@ def get_credit_card(
 @router.put(
     "/",
     status_code=status.HTTP_200_OK,
+    response_model=MessageDetail,
     responses={
         **default_responses,
         200: {
@@ -86,6 +88,7 @@ def update_credit_card(
 @router.delete(
     "/",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     responses={
         **default_responses,
         204: {

@@ -16,6 +16,7 @@ router = APIRouter()
 @router.get(
     "/health",
     status_code=status.HTTP_200_OK,
+    response_model=APIStatus,
     responses={
         200: {
             "description": "API is healthy",

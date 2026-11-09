@@ -24,6 +24,7 @@ USER_SORTABLE_FIELDS = frozenset({"id", "email", "created_at", "updated_at"})
 @router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
+    response_model=UserOut,
     responses={
         **default_responses,
         201: {
@@ -67,6 +68,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
 @router.get(
     "/me",
     status_code=status.HTTP_200_OK,
+    response_model=UserOut,
     responses={
         **default_responses,
         200: {
@@ -87,6 +89,7 @@ def get_user_me(
 @router.get(
     "/{id}",
     status_code=status.HTTP_200_OK,
+    response_model=UserOut,
     responses={
         **default_responses,
         200: {
@@ -141,6 +144,7 @@ def get_user(
     The response includes both the users data and these headers for pagination and filtering details.
     """,  # noqa: E501
     status_code=status.HTTP_200_OK,
+    response_model=list[UserOut],
     responses={
         **default_responses,
         200: {

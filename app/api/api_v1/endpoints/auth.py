@@ -22,7 +22,7 @@ async def login_google(request: Request) -> Any:
     return await oauth.google.authorize_redirect(request, str(redirect_uri))
 
 
-@router.get("/google")
+@router.get("/google", response_model=Token)
 async def auth_via_google(request: Request, db: Session = Depends(get_db)) -> Any:
     """
     ### Authorize

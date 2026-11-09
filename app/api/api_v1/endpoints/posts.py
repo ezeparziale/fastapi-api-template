@@ -80,6 +80,7 @@ def _load_post_out(db: Session, post_id: int) -> PostOut:
     The response includes both the posts data and these headers for pagination and filtering details.
     """,  # noqa: E501
     status_code=status.HTTP_200_OK,
+    response_model=list[PostOut],
     responses={
         **default_responses,
         200: {
@@ -185,6 +186,7 @@ async def get_posts(
 @router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
+    response_model=NewPostOut,
     responses={
         **default_responses,
         201: {
@@ -217,6 +219,7 @@ async def create_posts(
 @router.get(
     "/{id}",
     status_code=status.HTTP_200_OK,
+    response_model=PostOut,
     responses={
         **default_responses,
         200: {
@@ -259,6 +262,7 @@ async def get_post(
 @router.delete(
     "/{id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     responses={
         **default_responses,
         204: {
@@ -326,6 +330,7 @@ async def delete_post(
 @router.put(
     "/{id}",
     status_code=status.HTTP_200_OK,
+    response_model=PostOut,
     responses={
         **default_responses,
         200: {
@@ -396,6 +401,7 @@ async def update_post(
 @router.patch(
     "/{id}",
     status_code=status.HTTP_200_OK,
+    response_model=PostOut,
     responses={
         **default_responses,
         200: {
