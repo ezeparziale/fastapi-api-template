@@ -8,7 +8,7 @@ This template provides a robust starting point for building APIs with FastAPI. I
 - :closed_lock_with_key: User authentication with basic login and Google Auth
 - :busts_in_silhouette: User management with creation and CRUD operations
 - :page_facing_up: Example endpoints for Posts, Users, and Votes
-- :heartbeat: API healthcheck endpoint
+- :heartbeat: API healthcheck endpoints (liveness and readiness)
 - :key: JWT token-based authentication
 - :gear: Middleware support
 - :earth_americas: CORS configuration
@@ -120,6 +120,26 @@ uvicorn app.main:app --reload --port 8000 --env-file .env --ssl-keyfile key.pem 
 ```
 
 `--env-file .env` is what puts `OTEL_*` in the environment, the monitoring stack needs it.
+
+## :heartbeat: Health checks
+
+The API exposes separate probes so orchestrators can tell "the process is alive"
+apart from "the API can receive traffic":
+
+| Endpoint       | Probe     | Checks                            | On failure |
+| -------------- | --------- | --------------------------------- | ---------- |
+| `/health/live` | Liveness  | Process only                      | Never 503  |
+| `/health/ready`| Readiness | Database (required) + Redis (optional) | `503` when the database is down |
+| `/health`      | Legacy    | Database only                     | `503` when the database is down |
+
+- **Liveness** does not touch any dependency, so a database or Redis outage will
+  not cause the container to be restarted.
+- **Readiness** returns `503` only when the database is unreachable. Redis is an
+  optional dependency: an outage is reported as `redis_status: "unhealthy"` but
+  the API stays ready. When caching is disabled it reports `"disabled"`.
+- `/health` is kept for backward compatibility (it is what the `Dockerfile`
+  `HEALTHCHECK` calls). New deployments should point liveness probes to
+  `/health/live` and readiness probes to `/health/ready`.
 
 ## :rotating_light: Lint
 
