@@ -36,4 +36,4 @@ COPY app/ ./app
 
 ENTRYPOINT [ "uvicorn", "app.main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info" ]
 
-HEALTHCHECK --interval=10s --timeout=5s CMD curl -k --fail http://localhost:3000/health || exit 1
+HEALTHCHECK --interval=10s --timeout=5s CMD curl -k --fail http://localhost:8000/health || exit 1
