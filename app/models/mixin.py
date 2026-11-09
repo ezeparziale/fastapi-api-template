@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql.expression import text
 from sqlalchemy.sql.sqltypes import TIMESTAMP
@@ -13,5 +14,5 @@ class TimestampMixin:
         TIMESTAMP(timezone=True),
         server_default=text("now()"),
         nullable=False,
-        onupdate=datetime.now(),
+        onupdate=func.now(),
     )
