@@ -2,7 +2,6 @@ from math import ceil
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Response, status
-from loguru import logger
 from sqlalchemy import String, cast, desc, func, or_, select
 from sqlalchemy.orm import Session
 
@@ -18,6 +17,8 @@ from app.schemas import (
 from app.utils import get_password_hash
 
 router = APIRouter()
+
+USER_SORTABLE_FIELDS = frozenset({"id", "email", "created_at", "updated_at"})
 
 
 @router.post(
@@ -183,22 +184,21 @@ def get_users(
         .one()
     )
 
-    # Sort
-    try:
-        if filter_query.sort_by:
-            fields = filter_query.sort_by.split(",")
-            for field in fields:
-                if field.startswith("-"):
-                    stmt_select = stmt_select.order_by(desc(getattr(User, field[1:])))
-                else:
-                    stmt_select = stmt_select.order_by(getattr(User, field))
-        else:
-            stmt_select = stmt_select.order_by(User.id)
-    except Exception as e:
-        logger.warning(e)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid sort field"
-        ) from e
+    # Sort (only whitelisted columns)
+    if filter_query.sort_by:
+        for field in filter_query.sort_by.split(","):
+            field_name = field.removeprefix("-")
+            if field_name not in USER_SORTABLE_FIELDS:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid sort field",
+                )
+            column = getattr(User, field_name)
+            stmt_select = stmt_select.order_by(
+                desc(column) if field.startswith("-") else column
+            )
+    else:
+        stmt_select = stmt_select.order_by(User.id)
 
     # Pagination
     stmt_select = stmt_select.limit(filter_query.limit).offset(filter_query.offset)

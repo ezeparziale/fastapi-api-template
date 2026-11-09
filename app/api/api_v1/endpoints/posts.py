@@ -12,7 +12,6 @@ from fastapi import (
     status,
 )
 from fastapi.encoders import jsonable_encoder
-from loguru import logger
 from sqlalchemy import delete, desc, func, select, update
 from sqlalchemy.orm import Session, joinedload
 
@@ -30,6 +29,10 @@ from app.schemas import (
 )
 
 router = APIRouter()
+
+POST_SORTABLE_FIELDS = frozenset(
+    {"id", "title", "content", "published", "owner_id", "created_at", "updated_at"}
+)
 
 
 def _load_post_out(db: Session, post_id: int) -> PostOut:
@@ -136,22 +139,21 @@ async def get_posts(
         .one()
     )
 
-    # Sort
-    try:
-        if filter_query.sort_by:
-            fields = filter_query.sort_by.split(",")
-            for field in fields:
-                if field.startswith("-"):
-                    stmt_select = stmt_select.order_by(desc(getattr(Post, field[1:])))
-                else:
-                    stmt_select = stmt_select.order_by(getattr(Post, field))
-        else:
-            stmt_select = stmt_select.order_by(Post.id)
-    except Exception as e:
-        logger.warning(e)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid sort field"
-        ) from e
+    # Sort (only whitelisted columns)
+    if filter_query.sort_by:
+        for field in filter_query.sort_by.split(","):
+            field_name = field.removeprefix("-")
+            if field_name not in POST_SORTABLE_FIELDS:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid sort field",
+                )
+            column = getattr(Post, field_name)
+            stmt_select = stmt_select.order_by(
+                desc(column) if field.startswith("-") else column
+            )
+    else:
+        stmt_select = stmt_select.order_by(Post.id)
 
     # Pagination
     stmt_select = stmt_select.limit(filter_query.limit).offset(filter_query.offset)

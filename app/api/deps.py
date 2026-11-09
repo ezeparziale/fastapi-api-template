@@ -57,7 +57,7 @@ class CommonFilterParams(BaseModel):
                     "Sorts the results based on multiple fields."
                     "Separate field names by commas, and use '-' before a field name to specify descending order for that field."  # noqa: E501
                 ),
-                "value": "field_1,-field_2",
+                "value": "id,-created_at",
             },
         },
     )
