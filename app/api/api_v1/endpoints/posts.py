@@ -12,7 +12,7 @@ from fastapi import (
     status,
 )
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import delete, desc, func, select, update
+from sqlalchemy import delete, desc, func, or_, select, update
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.default_responses import default_responses
@@ -67,10 +67,12 @@ def _load_post_out(db: Session, post_id: int) -> PostOut:
 
     This endpoint returns a list of posts along with additional metadata in the response headers.
 
+    Unpublished posts are only visible to their owner.
+
     The following headers are included:
 
-    - **Total-Count**: Total number of posts in the database.
-    - **Total-Count-Filtered**: Total number of posts after applying any filters (e.g., search).
+    - **Total-Count**: Total number of posts visible to the current user.
+    - **Total-Count-Filtered**: Total number of visible posts after applying any filters (e.g., search).
     - **Pagination-Pages**: Total number of pages based on the limit specified in the query parameters.
 
     You can also sort the results by one or multiple fields using the `sort_by` query parameter.
@@ -99,7 +101,7 @@ def _load_post_out(db: Session, post_id: int) -> PostOut:
 async def get_posts(
     response: Response,
     filter_query: FilterParams,
-    _current_user: CurrentUser,
+    current_user: CurrentUser,
     background_tasks: BackgroundTasks,
     cache: CacheDep,
     db: Session = Depends(get_db),
@@ -107,8 +109,8 @@ async def get_posts(
     """
     ### Get posts list
     """
-    # 1. Attempt to get from cache using query params in the key
-    cache_key = f"posts:all:{filter_query.model_dump_json()}"
+    # 1. Attempt to get from cache using user and query params in the key
+    cache_key = f"posts:all:{current_user.id}:{filter_query.model_dump_json()}"
     cached_data = await cache.get(cache_key)
 
     if cached_data:
@@ -117,6 +119,8 @@ async def get_posts(
         return cast(list[PostOut], cached_data.get("posts"))
 
     # 2. Database Query
+    visibility = or_(Post.published.is_(True), Post.owner_id == current_user.id)
+
     votes_subquery = (
         select(Vote.post_id, func.count(Vote.post_id).label("votes_count"))
         .group_by(Vote.post_id)
@@ -127,6 +131,7 @@ async def get_posts(
         select(Post, func.coalesce(votes_subquery.c.votes_count, 0).label("votes"))
         .outerjoin(votes_subquery, Post.id == votes_subquery.c.post_id)
         .options(joinedload(Post.owner))
+        .where(visibility)
     )
 
     # Search
@@ -163,7 +168,9 @@ async def get_posts(
     posts = db.execute(stmt_select).all()
 
     # Total rows
-    total_rows = db.execute(select(func.count(Post.id))).scalars().one()
+    total_rows = (
+        db.execute(select(func.count(Post.id)).where(visibility)).scalars().one()
+    )
 
     # Extra headers
     total_pages = ceil(total_rows / filter_query.limit)
@@ -235,15 +242,17 @@ async def create_posts(
 )
 async def get_post(
     id: Annotated[int, Path(description="The ID of the post to get")],
-    _current_user: CurrentUser,
+    current_user: CurrentUser,
     background_tasks: BackgroundTasks,
     cache: CacheDep,
     db: Session = Depends(get_db),
 ) -> PostOut:
     """
     ### Get post by id
+
+    Unpublished posts are only visible to their owner.
     """
-    # 1. Check cache
+    # 1. Check cache (only published posts are cached)
     cache_key = f"posts:{id}"
     cached_post = await cache.get(cache_key)
     if cached_post:
@@ -252,9 +261,15 @@ async def get_post(
     # 2. Get post from DB
     post_out = _load_post_out(db, id)
 
+    if not post_out.published and post_out.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
+        )
+
     # 3. Save to cache
-    validated_data = jsonable_encoder(post_out)
-    background_tasks.add_task(cache.set, cache_key, validated_data, 3600)
+    if post_out.published:
+        validated_data = jsonable_encoder(post_out)
+        background_tasks.add_task(cache.set, cache_key, validated_data, 3600)
 
     return post_out
 
