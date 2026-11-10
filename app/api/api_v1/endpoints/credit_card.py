@@ -73,12 +73,13 @@ def update_credit_card(
     ### Update credit card from current user
     This endpoint allows the current user to update their credit card information.
     """
+    data = credit_card.model_dump(mode="json")
     stmt_upsert = (
         insert(UserCreditCard)
-        .values(user_id=current_user.id, credit_card=credit_card.model_dump())
+        .values(user_id=current_user.id, credit_card=data)
         .on_conflict_do_update(
             index_elements=[UserCreditCard.user_id],
-            set_={"credit_card": credit_card.model_dump()},
+            set_={"credit_card": data},
         )
     )
     db.execute(stmt_upsert)

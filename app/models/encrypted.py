@@ -1,4 +1,4 @@
-import pickle
+import json
 from typing import Any
 
 import sqlalchemy as sa
@@ -15,12 +15,12 @@ class Encrypted(sa.TypeDecorator[Any]):
         self.encryption_key = encryption_key
         self.fernet = Fernet(encryption_key.encode())
 
-    def process_bind_param(self, value: str | None, dialect: Dialect) -> str | None:
-        if value is not None:
-            value = self.fernet.encrypt(pickle.dumps(value)).decode()
-        return value
+    def process_bind_param(self, value: Any, dialect: Dialect) -> str | None:
+        if value is None:
+            return None
+        return self.fernet.encrypt(json.dumps(value).encode()).decode()
 
-    def process_result_value(self, value: str | None, dialect: Dialect) -> str | None:
-        if value is not None:
-            value = pickle.loads(self.fernet.decrypt(value.encode()))
-        return value
+    def process_result_value(self, value: str | None, dialect: Dialect) -> Any:
+        if value is None:
+            return None
+        return json.loads(self.fernet.decrypt(value.encode()))
