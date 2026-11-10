@@ -1,4 +1,5 @@
 import pytest
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.db import database
@@ -8,6 +9,15 @@ def test_engine_creation() -> None:
     # The engine should be created and bound to the correct URL
     assert database.engine is not None
     assert hasattr(database.engine, "connect")
+
+
+def test_engine_applies_statement_timeout() -> None:
+    with database.engine.connect() as connection:
+        statement_timeout = connection.execute(
+            text("SHOW statement_timeout")
+        ).scalar_one()
+
+    assert statement_timeout != "0"
 
 
 def test_sessionlocal_returns_session() -> None:

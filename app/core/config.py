@@ -65,6 +65,8 @@ class Settings(BaseSettings):
     DB_MAX_OVERFLOW: int = 40
     DB_POOL_TIMEOUT: float = 30.0
     DB_POOL_RECYCLE: int = 1800
+    DB_CONNECT_TIMEOUT: int = 5
+    DB_STATEMENT_TIMEOUT_MS: int = 30000
 
     @computed_field  # type: ignore[prop-decorator]
     @property
