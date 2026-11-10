@@ -8,7 +8,7 @@ from app.core.oauth import create_access_token, oauth
 from app.db.database import get_db
 from app.models import User
 from app.schemas import Token
-from app.utils import verify_password
+from app.utils import normalize_email, verify_password
 
 router = APIRouter()
 
@@ -28,7 +28,8 @@ async def auth_via_google(request: Request, db: Session = Depends(get_db)) -> An
     ### Authorize
     """
     token = await oauth.google.authorize_access_token(request)
-    user = db.query(User).filter(User.email == token["userinfo"]["email"]).first()
+    email = normalize_email(token["userinfo"]["email"])
+    user = db.query(User).filter(User.email == email).first()
 
     if not user:
         raise HTTPException(
@@ -47,7 +48,8 @@ async def login(
     """
     ### Login user
     """
-    user = db.query(User).filter(User.email == user_credentials.username).first()
+    email = normalize_email(user_credentials.username)
+    user = db.query(User).filter(User.email == email).first()
 
     if not user:
         raise HTTPException(

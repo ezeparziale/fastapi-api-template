@@ -1,7 +1,9 @@
 from datetime import date, datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+
+from app.utils import normalize_email
 
 
 class UserOut(BaseModel):
@@ -24,6 +26,13 @@ class UserOut(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr = Field(title="Email of the user", examples=["user@example.com"])
     password: str = Field(title="Password of the user", examples=["secret_password"])
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email_value(cls, value: object) -> object:
+        if isinstance(value, str):
+            return normalize_email(value)
+        return value
 
 
 class UserCreditCardIn(BaseModel):

@@ -34,6 +34,15 @@ def test_login(client: TestClient, test_user: User) -> None:
     assert int(user_id) == test_user.id
 
 
+# Test: Login is case-insensitive for the email
+def test_login_is_case_insensitive(client: TestClient, test_user: User) -> None:
+    res = client.post(
+        "/api/v1/auth/login",
+        data={"username": test_user.email.upper(), "password": test_user.password},
+    )
+    assert res.status_code == 200
+
+
 # Test: Login with incorrect credentials or missing fields should fail
 @pytest.mark.parametrize(
     "email, password, status_code",
@@ -110,6 +119,23 @@ def test_google_auth_callback_success(client: TestClient, test_user: User) -> No
         assert sub is not None
         assert int(sub) == test_user.id
         mock_authorize.assert_awaited_once()
+
+
+def test_google_auth_callback_normalizes_email(
+    client: TestClient, test_user: User
+) -> None:
+    # Given: Google returns the user's email with different capitalization
+    with patch(
+        "app.core.oauth.oauth.google.authorize_access_token",
+        new_callable=AsyncMock,
+        return_value={"userinfo": {"email": test_user.email.upper()}},
+    ):
+        # When: a GET request is made to the Google auth callback endpoint
+        response = client.get("/api/v1/auth/google")
+
+        # Then: the user is found and a token is returned
+        assert response.status_code == 200
+        assert Token(**response.json()).token_type == "bearer"
 
 
 def test_google_auth_callback_user_not_found(client: TestClient) -> None:

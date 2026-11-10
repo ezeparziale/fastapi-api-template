@@ -52,6 +52,29 @@ def test_create_user(
         assert new_user.email == email
 
 
+# Test: Email is normalized (trimmed and lowercased) when creating a user
+def test_create_user_normalizes_email(client: TestClient) -> None:
+    res = client.post(
+        "/api/v1/users/",
+        json={"email": "  Mixed.Case@Example.COM  ", "password": "abc123"},
+    )
+    logging.debug(res.json())
+    assert res.status_code == 201
+    assert res.json()["email"] == "mixed.case@example.com"
+
+
+# Test: Email uniqueness is case-insensitive
+def test_create_user_email_is_case_insensitive(
+    client: TestClient, test_user: User
+) -> None:
+    res = client.post(
+        "/api/v1/users/",
+        json={"email": test_user.email.upper(), "password": "abc123"},
+    )
+    logging.debug(res.json())
+    assert res.status_code == 409
+
+
 # Test: Get current user info (me endpoint) should return correct user
 def test_get_me(authorized_client: TestClient, test_user: User) -> None:
     res = authorized_client.get("/api/v1/users/me")
