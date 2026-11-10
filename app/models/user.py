@@ -31,7 +31,10 @@ class UserCreditCard(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, nullable=False)
     user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
     )
     credit_card: Mapped[dict[str, str]] = mapped_column(
         Encrypted(settings.ENCRYPTION_KEY), nullable=False

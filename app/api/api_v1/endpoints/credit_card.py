@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.api.default_responses import default_responses
@@ -72,14 +73,15 @@ def update_credit_card(
     ### Update credit card from current user
     This endpoint allows the current user to update their credit card information.
     """
-    stmt_select = select(UserCreditCard).filter_by(user_id=current_user.id)
-    existing_credit_card = db.execute(stmt_select).scalars().first()
-
-    if existing_credit_card:
-        existing_credit_card.credit_card = credit_card.model_dump()
-    else:
-        current_user.credit_card = UserCreditCard(credit_card=credit_card.model_dump())
-
+    stmt_upsert = (
+        insert(UserCreditCard)
+        .values(user_id=current_user.id, credit_card=credit_card.model_dump())
+        .on_conflict_do_update(
+            index_elements=[UserCreditCard.user_id],
+            set_={"credit_card": credit_card.model_dump()},
+        )
+    )
+    db.execute(stmt_upsert)
     db.commit()
 
     return MessageDetail(detail="Credit card updated")

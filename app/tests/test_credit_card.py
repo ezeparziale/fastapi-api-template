@@ -1,4 +1,9 @@
+import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from app.models import User, UserCreditCard
 
 
 # Test: GET /credit-card/ without authorization should return 401
@@ -67,6 +72,41 @@ def test_update_and_get_credit_card(authorized_client: TestClient) -> None:
     data = response.json()
     assert data["card_number"] == "**** **** **** 8888"
     assert data["expiration_date"] == "2031-01-01"
+
+
+# Test: Repeated PUTs are idempotent and keep a single credit card per user
+def test_update_credit_card_is_idempotent(
+    authorized_client: TestClient, test_user: User, session: Session
+) -> None:
+    payload = {
+        "card_number": "4111111111111111",
+        "expiration_date": "2030-12-31",
+        "cvv": "123",
+    }
+    for _ in range(2):
+        response = authorized_client.put("/api/v1/credit-card/", json=payload)
+        assert response.status_code == 200
+
+    count = session.query(UserCreditCard).filter_by(user_id=test_user.id).count()
+    assert count == 1
+
+
+# Test: The database rejects a second credit card for the same user
+def test_credit_card_is_unique_per_user(
+    authorized_client: TestClient, test_user: User, session: Session
+) -> None:
+    payload = {
+        "card_number": "4111111111111111",
+        "expiration_date": "2030-12-31",
+        "cvv": "123",
+    }
+    response = authorized_client.put("/api/v1/credit-card/", json=payload)
+    assert response.status_code == 200
+
+    session.add(UserCreditCard(user_id=test_user.id, credit_card=payload))
+    with pytest.raises(IntegrityError):
+        session.commit()
+    session.rollback()
 
 
 # Test: DELETE /credit-card/ to remove the credit card, then GET to verify deletion
