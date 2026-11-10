@@ -47,12 +47,12 @@ def test_login_is_case_insensitive(client: TestClient, test_user: User) -> None:
 @pytest.mark.parametrize(
     "email, password, status_code",
     [
-        # ("wrong_email@test.com", "abc123", 403),  # Non-existent user
-        ("abc1@test.com", "wrong_password", 403),  # Correct user, wrong password
+        # ("wrong_email@test.com", "abc123", 401),  # Non-existent user
+        ("abc1@test.com", "wrong_password", 401),  # Correct user, wrong password
         (
             "wrong_email@test.com",
             "wrong_password",
-            403,
+            401,
         ),  # Non-existent user and wrong password
         (None, "wrong_password", 422),  # Missing email
         ("abc1@test.com", None, 422),  # Missing password
@@ -78,6 +78,10 @@ def test_incorrect_login(
     # Then: the response status code should match the
     # expected status code for the scenario
     assert res.status_code == status_code
+
+    # And: unauthorized responses advertise the Bearer scheme
+    if status_code == 401:
+        assert res.headers["www-authenticate"] == "Bearer"
 
 
 # --- Google OAuth Tests ---
@@ -148,7 +152,8 @@ def test_google_auth_callback_user_not_found(client: TestClient) -> None:
         # When: a GET request is made to the Google auth callback endpoint
         response = client.get("/api/v1/auth/google")
 
-        # Then: the response should be 403 Forbidden
-        assert response.status_code == 403
-        assert response.json() == {"detail": "Invalid Credentials"}
+        # Then: the response should be 401 Unauthorized
+        assert response.status_code == 401
+        assert response.json() == {"detail": "Invalid credentials"}
+        assert response.headers["www-authenticate"] == "Bearer"
         mock_authorize.assert_awaited_once()

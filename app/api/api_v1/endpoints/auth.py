@@ -12,6 +12,12 @@ from app.utils import normalize_email, verify_password
 
 router = APIRouter()
 
+INVALID_CREDENTIALS = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Invalid credentials",
+    headers={"WWW-Authenticate": "Bearer"},
+)
+
 
 @router.get("/login/google")
 async def login_google(request: Request) -> Any:
@@ -32,9 +38,7 @@ async def auth_via_google(request: Request, db: Session = Depends(get_db)) -> An
     user = db.query(User).filter(User.email == email).first()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials"
-        )
+        raise INVALID_CREDENTIALS
 
     access_token = create_access_token(data={"sub": user.id})
     return {"access_token": access_token, "token_type": "bearer"}
@@ -52,14 +56,10 @@ async def login(
     user = db.query(User).filter(User.email == email).first()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials"
-        )
+        raise INVALID_CREDENTIALS
 
     if not verify_password(user_credentials.password, user.password):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials"
-        )
+        raise INVALID_CREDENTIALS
 
     access_token = create_access_token(data={"sub": user.id})
     return {"access_token": access_token, "token_type": "bearer"}
