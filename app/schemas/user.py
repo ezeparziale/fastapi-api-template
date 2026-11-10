@@ -46,11 +46,6 @@ class UserCreditCardIn(BaseModel):
         description="The expiration date of the credit card",
         examples=["2023-05-04"],
     )
-    cvv: str = Field(
-        title="CVV",
-        description="The CVV of the credit card",
-        examples=["123"],
-    )
 
 
 class UserCreditCardOut(BaseModel):

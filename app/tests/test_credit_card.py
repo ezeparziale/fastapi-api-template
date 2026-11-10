@@ -17,7 +17,6 @@ def test_update_credit_card_unauthorized(client: TestClient) -> None:
     payload = {
         "card_number": "4111111111111111",
         "expiration_date": "2030-12-31",
-        "cvv": "123",
     }
     response = client.put("/api/v1/credit-card/", json=payload)
     assert response.status_code == 401
@@ -41,7 +40,6 @@ def test_update_and_get_credit_card(authorized_client: TestClient) -> None:
     payload = {
         "card_number": "4111111111111111",
         "expiration_date": "2030-12-31",
-        "cvv": "123",
     }
     # Create (PUT)
     response = authorized_client.put("/api/v1/credit-card/", json=payload)
@@ -60,7 +58,6 @@ def test_update_and_get_credit_card(authorized_client: TestClient) -> None:
     payload2 = {
         "card_number": "5555666677778888",
         "expiration_date": "2031-01-01",
-        "cvv": "456",
     }
     response = authorized_client.put("/api/v1/credit-card/", json=payload2)
     assert response.status_code == 200
@@ -81,7 +78,6 @@ def test_update_credit_card_is_idempotent(
     payload = {
         "card_number": "4111111111111111",
         "expiration_date": "2030-12-31",
-        "cvv": "123",
     }
     for _ in range(2):
         response = authorized_client.put("/api/v1/credit-card/", json=payload)
@@ -98,7 +94,6 @@ def test_credit_card_is_unique_per_user(
     payload = {
         "card_number": "4111111111111111",
         "expiration_date": "2030-12-31",
-        "cvv": "123",
     }
     response = authorized_client.put("/api/v1/credit-card/", json=payload)
     assert response.status_code == 200
@@ -114,7 +109,6 @@ def test_delete_credit_card(authorized_client: TestClient) -> None:
     payload = {
         "card_number": "4111111111111111",
         "expiration_date": "2030-12-31",
-        "cvv": "123",
     }
     # Create credit card
     authorized_client.put("/api/v1/credit-card/", json=payload)
