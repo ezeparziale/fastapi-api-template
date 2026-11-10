@@ -21,7 +21,10 @@ class Post(Base, TimestampMixin):
         Boolean, server_default="TRUE", nullable=False
     )
     owner_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     owner: Mapped[User] = relationship(back_populates="posts")
 

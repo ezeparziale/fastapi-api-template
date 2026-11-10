@@ -12,7 +12,7 @@ class Vote(Base, TimestampMixin):
         ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
     post_id: Mapped[int] = mapped_column(
-        ForeignKey("posts.id", ondelete="CASCADE"), primary_key=True
+        ForeignKey("posts.id", ondelete="CASCADE"), primary_key=True, index=True
     )
 
     def __repr__(self) -> str:

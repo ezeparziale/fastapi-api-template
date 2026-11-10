@@ -24,6 +24,14 @@ def test_base_is_declarative_base() -> None:
     assert hasattr(database.Base, "metadata")
 
 
+def test_foreign_keys_are_indexed() -> None:
+    posts = database.Base.metadata.tables["posts"]
+    votes = database.Base.metadata.tables["votes"]
+
+    assert "ix_posts_owner_id" in {index.name for index in posts.indexes}
+    assert "ix_votes_post_id" in {index.name for index in votes.indexes}
+
+
 def test_get_db_yields_session() -> None:
     # get_db should yield a session and close it after use
     gen = database.get_db()
