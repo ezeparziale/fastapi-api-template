@@ -111,6 +111,19 @@ def test_get_posts_search_no_posts(authorized_client: TestClient) -> None:
     assert len(data) == 0
 
 
+# Test: Pagination pages are based on filtered results, not all posts
+def test_get_posts_pagination_pages_uses_filtered_count(
+    authorized_client: TestClient, test_posts: list[Post]
+) -> None:
+    params: dict[str, str | int] = {"search": test_posts[0].title, "limit": 1}
+    res = authorized_client.get("/api/v1/posts/", params=params)
+
+    assert res.status_code == 200
+    assert res.headers["Total-Count"] == str(len(test_posts))
+    assert res.headers["Total-Count-Filtered"] == "1"
+    assert res.headers["Pagination-Pages"] == "1"
+
+
 # Test: Unauthorized user should not be able to get all posts
 def test_unauthorized_user_get_all_posts(client: TestClient) -> None:
     res = client.get("/api/v1/posts/")

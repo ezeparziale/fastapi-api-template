@@ -216,6 +216,8 @@ def get_users(
     # Extra headers
     response.headers["Total-Count"] = str(total_rows)
     response.headers["Total-Count-Filtered"] = str(total_row_filtered)
-    response.headers["Pagination-Pages"] = str(ceil(total_rows / filter_query.limit))
+    response.headers["Pagination-Pages"] = str(
+        ceil(total_row_filtered / filter_query.limit)
+    )
 
     return users  # type: ignore[return-value]

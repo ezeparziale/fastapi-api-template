@@ -122,6 +122,20 @@ def test_get_users_search(authorized_client: TestClient, test_user: User) -> Non
     assert data[0]["email"] == test_user.email
 
 
+# Test: Pagination pages are based on filtered results, not all users
+@pytest.mark.usefixtures("test_user2")
+def test_get_users_pagination_pages_uses_filtered_count(
+    authorized_client: TestClient, test_user: User
+) -> None:
+    params: dict[str, str | int] = {"search": test_user.email, "limit": 1}
+    res = authorized_client.get("/api/v1/users/", params=params)
+
+    assert res.status_code == 200
+    assert res.headers["Total-Count"] == "2"
+    assert res.headers["Total-Count-Filtered"] == "1"
+    assert res.headers["Pagination-Pages"] == "1"
+
+
 # Test: Get user by id should return 200 if exists, 404 if not
 @pytest.mark.parametrize(
     "id, status_code",

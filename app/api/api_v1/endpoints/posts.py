@@ -179,7 +179,7 @@ async def get_posts(
     )
 
     # Extra headers
-    total_pages = ceil(total_rows / filter_query.limit)
+    total_pages = ceil(total_row_filtered / filter_query.limit)
     headers = {
         "Total-Count": str(total_rows),
         "Total-Count-Filtered": str(total_row_filtered),
