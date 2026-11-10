@@ -37,7 +37,10 @@ POST_SORTABLE_FIELDS = frozenset(
 
 def _load_post_out(db: Session, post_id: int) -> PostOut:
     votes_subquery = (
-        select(Vote.post_id, func.count(Vote.post_id).label("votes_count"))
+        select(
+            Vote.post_id,
+            func.coalesce(func.sum(Vote.direction), 0).label("votes_count"),
+        )
         .where(Vote.post_id == post_id)
         .group_by(Vote.post_id)
         .subquery()
@@ -122,7 +125,10 @@ async def get_posts(
     visibility = or_(Post.published.is_(True), Post.owner_id == current_user.id)
 
     votes_subquery = (
-        select(Vote.post_id, func.count(Vote.post_id).label("votes_count"))
+        select(
+            Vote.post_id,
+            func.coalesce(func.sum(Vote.direction), 0).label("votes_count"),
+        )
         .group_by(Vote.post_id)
         .subquery()
     )

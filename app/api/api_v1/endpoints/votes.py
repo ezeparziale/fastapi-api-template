@@ -1,136 +1,103 @@
-from typing import Any
-
-from fastapi import (
-    APIRouter,
-    BackgroundTasks,
-    Depends,
-    HTTPException,
-    Response,
-    status,
-)
-from sqlalchemy import delete, select
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from sqlalchemy import delete, func, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.api.default_responses import default_responses
 from app.api.deps import CacheDep, CurrentUser
 from app.db.database import get_db
 from app.models import Post, Vote
-from app.schemas import Message, MessageDetail
-from app.schemas import Vote as VoteSchema
+from app.schemas import Message, MessageDetail, VoteIn
 
 router = APIRouter()
 
 
 @router.post(
     "/",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     response_model=Message,
     responses={
         **default_responses,
-        201: {
-            "description": "Vote created",
-            "model": Message,
-            "content": {
-                "application/json": {"example": {"message": "Successfully added vote"}}
-            },
-        },
-        204: {
-            "description": "Vote deleted",
-        },
-        404: {
-            "description": "Post or Vote not found",
+        200: {
+            "description": "Vote registered or removed",
             "model": Message,
             "content": {
                 "application/json": {
                     "examples": {
-                        "post_not_found": {
-                            "summary": "Post not found",
-                            "value": {"detail": "Post not found"},
+                        "registered": {
+                            "summary": "Vote registered",
+                            "value": {"message": "Vote registered"},
                         },
-                        "vote_not_found": {
-                            "summary": "Vote not found",
-                            "value": {"detail": "Vote not found"},
+                        "removed": {
+                            "summary": "Vote removed",
+                            "value": {"message": "Vote removed"},
                         },
                     }
                 }
             },
         },
-        409: {
-            "description": "Post already voted",
+        404: {
+            "description": "Post not found",
             "model": MessageDetail,
-            "content": {
-                "application/json": {
-                    "example": {"detail": "Post already voted by user"}
-                }
-            },
+            "content": {"application/json": {"example": {"detail": "Post not found"}}},
         },
     },
 )
 async def vote_post(
-    vote: VoteSchema,
+    vote: VoteIn,
     current_user: CurrentUser,
     background_tasks: BackgroundTasks,
     cache: CacheDep,
     db: Session = Depends(get_db),
-) -> Any:
+) -> Message:
     """
     ### Vote a post
+
+    Use `direction=1` to upvote, `-1` to downvote or `0` to remove your vote.
+    Sending the same direction again has no additional effect, and `0` without
+    an existing vote leaves the post unchanged.
+
+    Only published posts can be voted on.
     """
     # Get post
     stmt_select = select(Post).where(Post.id == vote.post_id)
     post = db.execute(stmt_select).scalars().first()
 
-    # Check if post exists
-    if not post:
+    # Check if post exists and is published
+    if not post or not post.published:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found",
         )
 
-    # Check if vote exists
-    stmt_select_vote = select(Vote).where(
-        Vote.post_id == vote.post_id, Vote.user_id == current_user.id
-    )
-
-    found_vote = db.execute(stmt_select_vote).scalars().first()
-
-    if vote.dir == 1:
-        if found_vote:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Post already voted by user",
-            )
-
-        # Add vote in db
-        new_vote = Vote(post_id=vote.post_id, user_id=current_user.id)
-        db.add(new_vote)
-        db.commit()
-
-        # The vote count is baked into the cached post and posts list
-        background_tasks.add_task(cache.delete, f"posts:{vote.post_id}")
-        background_tasks.add_task(cache.clear_pattern, "posts:all:*")
-
-        return {"message": "Successfully added vote"}
-    else:
-        if not found_vote:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Vote does not exist"
-            )
-
-        # Delete vote in db
+    if vote.direction == 0:
         stmt_delete_vote = (
             delete(Vote)
             .where(Vote.post_id == vote.post_id, Vote.user_id == current_user.id)
             .execution_options(synchronize_session=False)
         )
         db.execute(stmt_delete_vote)
-        db.commit()
+        message = "Vote removed"
+    else:
+        stmt_upsert_vote = (
+            insert(Vote)
+            .values(
+                post_id=vote.post_id,
+                user_id=current_user.id,
+                direction=vote.direction,
+            )
+            .on_conflict_do_update(
+                index_elements=[Vote.user_id, Vote.post_id],
+                set_={"direction": vote.direction, "updated_at": func.now()},
+            )
+        )
+        db.execute(stmt_upsert_vote)
+        message = "Vote registered"
 
-        # The vote count is baked into the cached post and posts list
-        background_tasks.add_task(cache.delete, f"posts:{vote.post_id}")
-        background_tasks.add_task(cache.clear_pattern, "posts:all:*")
+    db.commit()
 
-        # Must return a Response instead of raising: FastAPI only attaches the
-        # background tasks to responses built by the normal return path, so a
-        # raised HTTPException would silently drop the invalidation above.
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    # The vote count is baked into the cached post and posts list
+    background_tasks.add_task(cache.delete, f"posts:{vote.post_id}")
+    background_tasks.add_task(cache.clear_pattern, "posts:all:*")
+
+    return Message(message=message)

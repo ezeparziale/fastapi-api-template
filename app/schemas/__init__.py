@@ -10,7 +10,7 @@ from .post import (
 )
 from .token import Token, TokenData
 from .user import UserCreate, UserCreditCardIn, UserCreditCardOut, UserOut
-from .vote import Vote
+from .vote import VoteIn
 
 __all__ = [
     "APIStatusOut",
@@ -30,5 +30,5 @@ __all__ = [
     "UserCreditCardIn",
     "UserCreditCardOut",
     "UserOut",
-    "Vote",
+    "VoteIn",
 ]

@@ -3,15 +3,15 @@ from typing import Annotated
 from pydantic import BaseModel, Field
 
 
-class Vote(BaseModel):
+class VoteIn(BaseModel):
     post_id: int = Field(title="ID of the post", examples=["1"])
-    dir: Annotated[
+    direction: Annotated[
         int,
         Field(
-            ge=0,
+            ge=-1,
             le=1,
             title="Vote direction",
-            description="Indicates the direction of the vote. Use 1 for an upvote and 0 for a downvote.",  # noqa: E501
-            examples=[0, 1],
+            description="Use 1 to upvote, -1 to downvote and 0 to remove your vote.",  # noqa: E501
+            examples=[-1, 0, 1],
         ),
     ]
