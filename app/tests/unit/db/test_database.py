@@ -42,6 +42,30 @@ def test_foreign_keys_are_indexed() -> None:
     assert "ix_votes_post_id" in {index.name for index in votes.indexes}
 
 
+def test_constraints_use_alembic_naming_convention() -> None:
+    metadata = database.Base.metadata
+
+    def constraint_names(table_name: str) -> set[str]:
+        return {
+            constraint.name
+            for constraint in metadata.tables[table_name].constraints
+            if isinstance(constraint.name, str)
+        }
+
+    assert "pk_users" in constraint_names("users")
+    assert "uq_users_email" in constraint_names("users")
+    assert "pk_posts" in constraint_names("posts")
+    assert "fk_posts_owner_id_users" in constraint_names("posts")
+    assert "pk_votes" in constraint_names("votes")
+    assert "fk_votes_user_id_users" in constraint_names("votes")
+    assert "fk_votes_post_id_posts" in constraint_names("votes")
+    assert "pk_users_credit_cards" in constraint_names("users_credit_cards")
+    assert "uq_users_credit_cards_user_id" in constraint_names("users_credit_cards")
+    assert "fk_users_credit_cards_user_id_users" in constraint_names(
+        "users_credit_cards"
+    )
+
+
 def test_get_db_yields_session() -> None:
     # get_db should yield a session and close it after use
     gen = database.get_db()
