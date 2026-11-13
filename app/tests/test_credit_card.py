@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import IntegrityError
@@ -102,6 +104,33 @@ def test_credit_card_is_unique_per_user(
     with pytest.raises(IntegrityError):
         session.commit()
     session.rollback()
+
+
+# Test: Credit cards have timestamps and updates refresh updated_at
+def test_credit_card_timestamps(
+    authorized_client: TestClient, test_user: User, session: Session
+) -> None:
+    payload = {
+        "card_number": "4111111111111111",
+        "expiration_date": "2030-12-31",
+    }
+    response = authorized_client.put("/api/v1/credit-card/", json=payload)
+    assert response.status_code == 200
+
+    session.expire_all()
+    credit_card = session.query(UserCreditCard).filter_by(user_id=test_user.id).one()
+    assert credit_card.created_at is not None
+    assert credit_card.updated_at is not None
+
+    credit_card.updated_at = datetime(2000, 1, 1, tzinfo=UTC)
+    session.commit()
+
+    response = authorized_client.put("/api/v1/credit-card/", json=payload)
+    assert response.status_code == 200
+
+    session.expire_all()
+    credit_card = session.query(UserCreditCard).filter_by(user_id=test_user.id).one()
+    assert credit_card.updated_at > datetime(2000, 1, 1, tzinfo=UTC)
 
 
 # Test: DELETE /credit-card/ to remove the credit card, then GET to verify deletion

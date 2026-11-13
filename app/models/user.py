@@ -26,7 +26,7 @@ class User(Base, TimestampMixin):
         return f"User(id={self.id}, email={self.email}, created_at={self.created_at})"
 
 
-class UserCreditCard(Base):
+class UserCreditCard(Base, TimestampMixin):
     __tablename__ = "users_credit_cards"
 
     id: Mapped[int] = mapped_column(primary_key=True, nullable=False)
@@ -43,4 +43,7 @@ class UserCreditCard(Base):
     user: Mapped[User] = relationship("User", back_populates="credit_card")
 
     def __repr__(self) -> str:
-        return f"UserCreditCard(id={self.id}, user_id={self.user_id})"
+        return (
+            f"UserCreditCard(id={self.id}, user_id={self.user_id}, "
+            f"created_at={self.created_at})"
+        )

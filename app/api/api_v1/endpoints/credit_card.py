@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -79,7 +79,7 @@ def update_credit_card(
         .values(user_id=current_user.id, credit_card=data)
         .on_conflict_do_update(
             index_elements=[UserCreditCard.user_id],
-            set_={"credit_card": data},
+            set_={"credit_card": data, "updated_at": func.now()},
         )
     )
     db.execute(stmt_upsert)
