@@ -24,7 +24,12 @@ app = FastAPI(
 setup_logging()
 
 # Middlewares
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SESSION_SECRET_KEY,
+    same_site="lax",
+    https_only=settings.ENVIRONMENT != "local",
+)
 
 # Set all CORS enabled origins
 if settings.BACKEND_CORS_ORIGINS:
