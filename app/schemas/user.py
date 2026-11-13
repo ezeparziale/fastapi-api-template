@@ -25,13 +25,24 @@ class UserOut(BaseModel):
 
 class UserCreate(BaseModel):
     email: EmailStr = Field(title="Email of the user", examples=["user@example.com"])
-    password: str = Field(title="Password of the user", examples=["secret_password"])
+    password: str = Field(
+        title="Password of the user",
+        min_length=8,
+        examples=["secret_password"],
+    )
 
     @field_validator("email", mode="before")
     @classmethod
     def normalize_email_value(cls, value: object) -> object:
         if isinstance(value, str):
             return normalize_email(value)
+        return value
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_length(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("Password must be at most 72 bytes")
         return value
 
 

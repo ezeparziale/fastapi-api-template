@@ -30,6 +30,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     hashed_password_bytes = hashed_password.encode("utf-8")
     plain_password_bytes = plain_password.encode("utf-8")
-    return bcrypt.checkpw(
-        password=plain_password_bytes, hashed_password=hashed_password_bytes
-    )
+    try:
+        return bcrypt.checkpw(
+            password=plain_password_bytes, hashed_password=hashed_password_bytes
+        )
+    except ValueError:
+        return False

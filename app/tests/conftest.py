@@ -51,7 +51,7 @@ def client(session: Session) -> Generator[TestClient]:
 
 @pytest.fixture
 def test_user(client: TestClient) -> User:
-    user_data = {"email": "abc1@test.com", "password": "abc123"}
+    user_data = {"email": "abc1@test.com", "password": "abc12345"}
     res = client.post("/api/v1/users/", json=user_data)
     assert res.status_code == 201
     logging.debug(res.json())
@@ -62,7 +62,7 @@ def test_user(client: TestClient) -> User:
 
 @pytest.fixture
 def test_user2(client: TestClient) -> User:
-    user_data = {"email": "abc2@test.com", "password": "abc123"}
+    user_data = {"email": "abc2@test.com", "password": "abc12345"}
     res = client.post("/api/v1/users/", json=user_data)
     assert res.status_code == 201
     logging.debug(res.json())

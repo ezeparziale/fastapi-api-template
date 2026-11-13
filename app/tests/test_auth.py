@@ -56,6 +56,7 @@ def test_login_is_case_insensitive(client: TestClient, test_user: User) -> None:
         ),  # Non-existent user and wrong password
         (None, "wrong_password", 422),  # Missing email
         ("abc1@test.com", None, 422),  # Missing password
+        ("abc1@test.com", "a" * 73, 401),  # Password over bcrypt's 72-byte limit
     ],
 )
 @pytest.mark.usefixtures("test_user")

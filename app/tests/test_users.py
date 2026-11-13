@@ -27,12 +27,17 @@ def test_get_all_users(authorized_client: TestClient) -> None:
 @pytest.mark.parametrize(
     "email, password, status_code",
     [
-        ("new_user@test.com", "abc123", 201),
+        ("new_user@test.com", "abc12345", 201),
         ("abc1@test.com", "user_exists", 409),
         ("abc1@test", "wrong_email", 422),
         (12345, "wrong_email_type", 422),
         (None, "no_email", 422),
         ("no_password@test.com", None, 422),
+        ("short_password@test.com", "short", 422),
+        ("empty_password@test.com", "", 422),
+        ("long_password@test.com", "a" * 73, 422),
+        ("multibyte_password@test.com", "á" * 40, 422),
+        ("max_bytes_password@test.com", "a" * 72, 201),
     ],
 )
 @pytest.mark.usefixtures("test_user")
@@ -56,7 +61,7 @@ def test_create_user(
 def test_create_user_normalizes_email(client: TestClient) -> None:
     res = client.post(
         "/api/v1/users/",
-        json={"email": "  Mixed.Case@Example.COM  ", "password": "abc123"},
+        json={"email": "  Mixed.Case@Example.COM  ", "password": "abc12345"},
     )
     logging.debug(res.json())
     assert res.status_code == 201
@@ -69,7 +74,7 @@ def test_create_user_email_is_case_insensitive(
 ) -> None:
     res = client.post(
         "/api/v1/users/",
-        json={"email": test_user.email.upper(), "password": "abc123"},
+        json={"email": test_user.email.upper(), "password": "abc12345"},
     )
     logging.debug(res.json())
     assert res.status_code == 409
