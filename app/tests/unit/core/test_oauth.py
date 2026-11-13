@@ -1,4 +1,5 @@
 import time
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -15,10 +16,25 @@ def mock_settings(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(oauth, "SECRET_KEY", "unit-test-secret-0123456789")
     monkeypatch.setattr(oauth, "ALGORITHM", "HS256")
     monkeypatch.setattr(oauth, "ACCESS_TOKEN_EXPIRE_MINUTES", 15)
+    monkeypatch.setattr(oauth, "JWT_ISSUER", "unit-test-issuer")
+    monkeypatch.setattr(oauth, "JWT_AUDIENCE", "unit-test-audience")
 
 
 def build_key(secret: str = "unit-test-secret-0123456789") -> OctKey:
     return jwk.import_key(data=secret, key_type="oct")
+
+
+def valid_claims(**overrides: Any) -> dict[str, Any]:
+    claims: dict[str, Any] = {
+        "sub": "1",
+        "exp": int(time.time()) + 600,
+        "iat": int(time.time()),
+        "jti": "unit-test-jti",
+        "iss": "unit-test-issuer",
+        "aud": "unit-test-audience",
+    }
+    claims.update(overrides)
+    return claims
 
 
 def mock_db(user: object | None) -> MagicMock:
@@ -38,7 +54,11 @@ def test_create_access_token_returns_jwt() -> None:
 
     decoded = jwt.decode(value=token, key=build_key(), algorithms=["HS256"])
     assert decoded.claims["sub"] == "1"
+    assert decoded.claims["iss"] == "unit-test-issuer"
+    assert decoded.claims["aud"] == "unit-test-audience"
     assert "exp" in decoded.claims
+    assert "iat" in decoded.claims
+    assert "jti" in decoded.claims
 
 
 # Test get_current_user returns user when token is valid and user exists
@@ -63,11 +83,9 @@ def test_get_current_user_invalid_token() -> None:
 
 # Test get_current_user raises HTTPException if sub is missing in payload
 def test_get_current_user_missing_sub() -> None:
-    token = jwt.encode(
-        claims={"exp": int(time.time()) + 600},
-        key=build_key(),
-        header={"alg": "HS256"},
-    )
+    claims = valid_claims()
+    claims.pop("sub")
+    token = jwt.encode(claims=claims, key=build_key(), header={"alg": "HS256"})
     with pytest.raises(HTTPException) as excinfo:
         oauth.get_current_user(token=token, db=mock_db(MagicMock()))
     assert excinfo.value.status_code == status.HTTP_401_UNAUTHORIZED
@@ -76,10 +94,33 @@ def test_get_current_user_missing_sub() -> None:
 # Test get_current_user raises HTTPException for expired token
 def test_get_current_user_expired_token() -> None:
     token = jwt.encode(
-        claims={"sub": "1", "exp": int(time.time()) - 100},
+        claims=valid_claims(exp=int(time.time()) - 100),
         key=build_key(),
         header={"alg": "HS256"},
     )
+    with pytest.raises(HTTPException) as excinfo:
+        oauth.get_current_user(token=token, db=mock_db(MagicMock()))
+    assert excinfo.value.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+# Test get_current_user rejects tokens with wrong or missing standard claims
+@pytest.mark.parametrize(
+    "overrides, remove",
+    [
+        ({"iss": "another-issuer"}, None),
+        ({"aud": "another-audience"}, None),
+        ({}, "jti"),
+        ({}, "iat"),
+    ],
+)
+def test_get_current_user_invalid_standard_claims(
+    overrides: dict[str, Any], remove: str | None
+) -> None:
+    claims = valid_claims(**overrides)
+    if remove is not None:
+        claims.pop(remove)
+    token = jwt.encode(claims=claims, key=build_key(), header={"alg": "HS256"})
+
     with pytest.raises(HTTPException) as excinfo:
         oauth.get_current_user(token=token, db=mock_db(MagicMock()))
     assert excinfo.value.status_code == status.HTTP_401_UNAUTHORIZED

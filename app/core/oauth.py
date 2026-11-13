@@ -1,5 +1,6 @@
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
+from uuid import uuid4
 
 from authlib.integrations.starlette_client import OAuth
 from fastapi import Depends, HTTPException, status
@@ -19,6 +20,8 @@ from app.schemas import TokenData
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+JWT_ISSUER = settings.JWT_ISSUER
+JWT_AUDIENCE = settings.JWT_AUDIENCE
 
 oauth = OAuth()
 
@@ -34,9 +37,18 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login
 
 
 def create_access_token(data: dict[str, Any]) -> str:
+    now = datetime.now(UTC)
     to_encode = data.copy()
-    expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
+    expire = now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update(
+        {
+            "exp": expire,
+            "iat": now,
+            "jti": str(uuid4()),
+            "iss": JWT_ISSUER,
+            "aud": JWT_AUDIENCE,
+        }
+    )
     if "sub" in to_encode:
         to_encode["sub"] = str(to_encode["sub"])
     key = jwk.import_key(data=SECRET_KEY, key_type="oct")
@@ -54,7 +66,13 @@ def get_current_user(
     try:
         key = jwk.import_key(data=SECRET_KEY, key_type="oct")
         payload = jwt.decode(value=token, key=key, algorithms=[ALGORITHM])
-        JWTClaimsRegistry(leeway=0).validate(payload.claims)
+        JWTClaimsRegistry(
+            leeway=0,
+            iss={"essential": True, "value": JWT_ISSUER},
+            aud={"essential": True, "value": JWT_AUDIENCE},
+            iat={"essential": True},
+            jti={"essential": True},
+        ).validate(payload.claims)
         sub = payload.claims.get("sub")
         if sub is None:
             raise credentials_exception
